@@ -1,0 +1,4 @@
+Первый абзац: alpha beta gamma. Delta epsilon zeta.
+Второй абзац: hello world! Привет, мир? Код: var x = 1;
+
+Третий абзац: 日本語 и эмодзи 😀.

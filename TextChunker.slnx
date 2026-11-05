@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="src/TextChunker.Abstractions/TextChunker.Abstractions.csproj" />
+  <Project Path="src/TextChunker/TextChunker.csproj" />
+  <Project Path="src/TextChunker.Api/TextChunker.Api.csproj" />
+  <Project Path="tests/TextChunker.Api.Tests/TextChunker.Api.Tests.csproj" />
+  <Project Path="tests/TextChunker.IntegrationTests/TextChunker.IntegrationTests.csproj" />
+  <Project Path="tests/TextChunker.Tests/TextChunker.Tests.csproj" />
+  <Project Path="tools/SemanticCalibration/SemanticCalibration.csproj" />
+</Solution>

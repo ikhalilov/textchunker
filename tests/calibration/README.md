@@ -1,13 +1,13 @@
-# Калибровка семантических границ
+# Semantic Boundary Calibration
 
-Небольшой синтетический корпус для проверки качества границ и подбора
-`--semantic-percentile` / `--semantic-window`. Это **ориентир**, а не benchmark:
-документы синтетические, границы размечены вручную. Дополнительно есть
-генерируемый корпус реальных статей Википедии (см. ниже).
+A small synthetic corpus for checking boundary quality and picking
+`--semantic-percentile` / `--semantic-window`. It is a **guideline**, not a
+benchmark: documents are synthetic, boundaries are labeled by hand. There is
+also a generated corpus of real Wikipedia articles (see below).
 
-## Формат
+## Format
 
-Рядом с каждым `NN-name.md` лежит `NN-name.json`:
+Next to each `NN-name.md` there is a `NN-name.json`:
 
 ```json
 {
@@ -18,14 +18,14 @@
 }
 ```
 
-Строка `boundaries` — подстрока, с которой начинается новый смысловой сегмент
-(обычно заголовок или первое предложение). Инструмент находит её позицию,
-определяет содержащий атом и считает границу попавшей, если предсказание
-отстоит от истины не более чем на ±1 атом.
+The `boundaries` strings are substrings that start a new semantic segment
+(usually a heading or the first sentence). The tool finds the position of the
+substring, determines the atom containing it and counts a boundary as a hit
+if the prediction is within ±1 atom of the truth.
 
-## Запуск
+## Running
 
-Нужен живой llama.cpp с `embeddinggemma-2` (см.
+A live llama.cpp server with `embeddinggemma-2` is required (see
 [docs/semantic-chunking.md](../../docs/semantic-chunking.md)):
 
 ```bash
@@ -37,49 +37,53 @@ dotnet run --project tools/SemanticCalibration -- \
   --windows 1,2,3,5
 ```
 
-Полезные флаги:
+Useful flags:
 
-- `--verbose` — precision/recall/F1 и индексы границ по каждому документу;
-- `--dump-atoms` — атомы, расстояния `d_before`, истинные (`T`) и предсказанные
-  (`B`) границы;
-- `--cache <dir>` — каталог кэша эмбеддингов (по умолчанию во временном каталоге);
-- `--tolerance <n>` — допуск совпадения границы в атомах (по умолчанию 1);
-- `--concurrency <n>` / `--batch-size <n>` — параметры провайдера;
-- `--max-atom-tokens <n>` — ограничение размера атома;
-- `--min-distances 0.02,0.05` — перебор `minDistance`.
+- `--verbose` — precision/recall/F1 and per-document boundary indices;
+- `--dump-atoms` — atoms, `d_before` distances, true (`T`) and predicted
+  (`B`) boundaries;
+- `--cache <dir>` — embedding cache directory (default — a temporary directory);
+- `--tolerance <n>` — boundary match tolerance in atoms (default 1);
+- `--concurrency <n>` / `--batch-size <n>` — provider parameters;
+- `--max-atom-tokens <n>` — atom size limit;
+- `--min-distances 0.02,0.05` — sweep of `minDistance`.
 
-## Текущий корпус
+## Current Corpus
 
-10 документов, 23 размеченные границы:
+10 documents, 23 labeled boundaries:
 
-- RU/EN, Markdown-заголовки, проза без заголовков, code fence, смешанные языки;
-- короткие подзаголовки («Охрана труда», «Сборы») и длинные абзацы;
-- тематические сдвиги внутри абзацев (фондовый рынок, рецепт, кадры, право).
+- RU/EN, Markdown headings, prose without headings, code fences, mixed
+  languages;
+- short subheadings ("Охрана труда", "Сборы") and long paragraphs;
+- thematic shifts within paragraphs (stock market, a recipe, HR, law).
 
-## Результаты (2026-11-04, `embeddinggemma-2-BF16`, 768d)
+## Results (2026-11-04, `embeddinggemma-2-BF16`, 768d)
 
-| Набор | percentile | window | Precision | Recall | F1 |
+| Corpus | percentile | window | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
-| все 10 | 0.90 | 1 | 0.629 | 0.957 | 0.759 |
-| все 10 | 0.95 | 1 | 0.720 | 0.783 | 0.750 |
-| только проза (5) | 0.90 | 1 | 0.818 | 0.900 | 0.857 |
-| все 10 | 0.90 | 2 | 0.545 | 0.783 | 0.643 |
-| все 10 | 0.90 | 3 | 0.515 | 0.739 | 0.607 |
-| только проза (5) | 0.90 | 3 | 0.364 | 0.400 | 0.381 |
+| all 10 | 0.90 | 1 | 0.629 | 0.957 | 0.759 |
+| all 10 | 0.95 | 1 | 0.720 | 0.783 | 0.750 |
+| prose only (5) | 0.90 | 1 | 0.818 | 0.900 | 0.857 |
+| all 10 | 0.90 | 2 | 0.545 | 0.783 | 0.643 |
+| all 10 | 0.90 | 3 | 0.515 | 0.739 | 0.607 |
+| prose only (5) | 0.90 | 3 | 0.364 | 0.400 | 0.381 |
 
-Выводы:
+Takeaways:
 
-- **percentile 0.90** остаётся лучшим дефолтом; 0.95 точнее, но теряет recall.
-- **window 1** лучше окна 3 на этом корпусе: усреднение по трём атомам сглаживает
-  короткие тематические сегменты (заголовок + 2–3 предложения).
-- Markdown-заголовки дают структурные границы независимо от эмбеддингов;
-  на прозе качество определяется только расстояниями `1 − cos` (F1 0.857).
+- **percentile 0.90** remains the best default; 0.95 is more precise but
+  loses recall.
+- **window 1** beats window 3 on this corpus: averaging over three atoms
+  smooths short thematic segments (a heading + 2–3 sentences).
+- Markdown headings provide structural boundaries independently of embeddings;
+  on prose, quality is determined only by the `1 − cos` distances
+  (F1 0.857).
 
-## Реальный корпус (Википедия)
+## Real Corpus (Wikipedia)
 
-`fetch_wikipedia_corpus.py` скачивает 40 статей (20 RU + 20 EN), вырезает заголовки
-разделов и использует начало каждого раздела как истинную границу. Тексты
-(CC BY-SA 4.0) в git не коммитятся: корпус генерируется в `wiki/` (в `.gitignore`).
+`fetch_wikipedia_corpus.py` downloads 40 articles (20 RU + 20 EN), extracts
+section headings and uses the start of each section as a true boundary. The
+texts (CC BY-SA 4.0) are not committed to git: the corpus is generated in
+`wiki/` (gitignored).
 
 ```bash
 python tests/calibration/fetch_wikipedia_corpus.py
@@ -90,30 +94,32 @@ dotnet run --project tools/SemanticCalibration -- \
   --tolerance 2 --concurrency 4
 ```
 
-Получилось 39 документов, ~1.9 МБ, ~340 границ (8.7 на документ),
-350 атомов на документ.
+Result: 39 documents, ~1.9 MB, ~340 boundaries (8.7 per document), 350
+atoms per document.
 
-| Набор | percentile | window | Precision | Recall | F1 |
+| Corpus | percentile | window | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
-| wiki (39 док.) | 0.90 | 1 | 0.126 | 0.515 | 0.203 |
-| wiki (39 док.) | 0.95 | 3 | 0.207 | 0.426 | 0.279 |
-| wiki (39 док.) | 0.95 | 5 | 0.222 | 0.456 | 0.298 |
-| wiki (39 док.) | 0.97 | 3 | 0.265 | 0.335 | 0.296 |
-| синтетика (10 док.) | 0.90 | 1 | 0.629 | 0.957 | 0.759 |
+| wiki (39 docs) | 0.90 | 1 | 0.126 | 0.515 | 0.203 |
+| wiki (39 docs) | 0.95 | 3 | 0.207 | 0.426 | 0.279 |
+| wiki (39 docs) | 0.95 | 5 | 0.222 | 0.456 | 0.298 |
+| wiki (39 docs) | 0.97 | 3 | 0.265 | 0.335 | 0.296 |
+| synthetic (10 docs) | 0.90 | 1 | 0.629 | 0.957 | 0.759 |
 
-Выводы:
+Takeaways:
 
-- Раздел Википедии — редакционная структура, а не всегда тематический сдвиг:
-  часть разделов короткая и семантически близка соседям, поэтому F1 ниже.
-- Для длинных энциклопедических документов лучше `0.95–0.97` и окно `3–5`;
-  для коротких/структурированных — `0.90/1`.
-- Дефолт `0.90/1` оставлен: на синтетике он сильно лучше, а средний F1 по двум
-  корпусам выше. Для своего домена прогоните инструмент и посмотрите `--verbose`.
+- Wikipedia sections are editorial structure, not always a thematic shift:
+  some sections are short and semantically close to their neighbors, so F1 is
+  lower.
+- For long encyclopedic documents `0.95–0.97` and window `3–5` are better;
+  for short/structured texts — `0.90/1`.
+- The `0.90/1` default is kept: it is much better on the synthetic corpus and
+  has the higher average F1 across both corpora. For your own domain, run the
+  tool and check `--verbose`.
 
-## Добавление документа
+## Adding a Document
 
-1. Положите `NN-name.md` в `corpus/`.
-2. Создайте `NN-name.json` с подстроками, начинающими новые темы.
-3. Убедитесь, что подстрока встречается в тексте ровно один раз (иначе
-   `IndexOf` возьмёт первое вхождение).
-4. Прогоните инструмент и посмотрите `--dump-atoms` для спорных границ.
+1. Put `NN-name.md` into `corpus/`.
+2. Create `NN-name.json` with substrings that start new topics.
+3. Make sure the substring occurs exactly once in the text (otherwise
+   `IndexOf` takes the first occurrence).
+4. Run the tool and check `--dump-atoms` for debatable boundaries.

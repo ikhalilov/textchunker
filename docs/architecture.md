@@ -1,15 +1,16 @@
-# Архитектура
+# Architecture
 
-## Обзор
+## Overview
 
-`TextChunker` — потоковый конвейер: источник текста → токенизатор → стратегия нарезки → writer.
-Модули разделены интерфейсами, поэтому токенизатор, стратегию и формат вывода можно менять независимо.
+`TextChunker` is a streaming pipeline: text source → tokenizer → chunking
+strategy → writer. Modules are separated by interfaces, so the tokenizer, the
+strategy and the output format can be changed independently.
 
 ```
 ITextSource.Lines()
-        │  (content, startChar, endChar) в join-пространстве "\n"
+        │  (content, startChar, endChar) in the "\n"-joined space
         ▼
-ChunkingService  ── буфер + абсолютные смещения + metadata/seq/stats
+ChunkingService  ── buffer + absolute offsets + metadata/seq/stats
         │
         ▼
 IChunker.Chunk(text, tokenizer, options, final)
@@ -17,160 +18,200 @@ IChunker.Chunk(text, tokenizer, options, final)
         ▼
 Chunk  ──►  IChunkWriter (JSON Lines / text)
 
-Обёртки:
-  CLI (src/TextChunker)        ── источники file/stdin, JSONL/text, exit-коды
-  API (src/TextChunker.Api)    ── Minimal APIs, in-memory источник, JSON/NDJSON
+Wrappers:
+  CLI (src/TextChunker)        ── file/stdin sources, JSONL/text, exit codes
+  API (src/TextChunker.Api)    ── Minimal APIs, in-memory source, JSON/NDJSON
 ```
 
-## Слои
+## Layers
 
-### Источники (`Sources/`)
+### Sources (`Sources/`)
 
 - `ITextSource` — `Lines()`: `(Content, StartChar, EndChar)`.
-- `FileTextSource` — файл, кодировка, BOM; ошибки → exit 3/4/2.
-- `StdinTextSource` — `Console.In`; отсутствие перенаправления → exit 1.
-- `TextLines` — `StreamReader`, снятие UTF-8 BOM, `--invalid-encoding`,
-  NFC/NFKC/line-endings/whitespace-нормализация.
-- Строки склеиваются `"\n"`; `StartChar`/`EndChar` — смещения в этом пространстве
-  (`EndChar` исключающий). Именно на него опираются смещения чанков.
+- `FileTextSource` — file, encoding, BOM; errors → exit 3/4/2.
+- `StdinTextSource` — `Console.In`; no redirection → exit 1.
+- `TextLines` — `StreamReader`, UTF-8 BOM stripping, `--invalid-encoding`,
+  NFC/NFKC/line-endings/whitespace normalization.
+- Lines are joined with `"\n"`; `StartChar`/`EndChar` — offsets in this space
+  (`EndChar` exclusive). Chunk offsets are based on it.
 
-### Токенизаторы (`Tokenizers/`)
+### Tokenizers (`Tokenizers/`)
 
-- `ITokenizer`: `CountTokens`, `CutAtTokenBoundary(text, n)` (0-based), `Name`, `ModelName`.
-- `none`, `char` (code points, ZWJ/флаги/оттенки кожи), `word`, `regex` — приближённые.
-- `huggingface` — точный BPE через `Microsoft.ML.Tokenizers` + `tokenizer.json`:
-  кэш в `--tokenizer-cache-dir`, одна загрузка, далее offline; ошибки → `TokenizerLoadException` (exit 5).
-- `TokenizerFactory` — имена и `ArgumentOutOfRangeException` для неизвестных (exit 2).
-- `ChunkTokenCount.ForFinalChunk` — финальный пересчёт `prefix + text`.
+- `ITokenizer`: `CountTokens`, `CutAtTokenBoundary(text, n)` (0-based),
+  `Name`, `ModelName`.
+- `none`, `char` (code points, ZWJ/flags/skin tones), `word`, `regex` —
+  approximate.
+- `huggingface` — exact BPE via `Microsoft.ML.Tokenizers` +
+  `tokenizer.json`: cache in `--tokenizer-cache-dir`, loaded once, then
+  offline; errors → `TokenizerLoadException` (exit 5).
+- `TokenizerFactory` — names and `ArgumentOutOfRangeException` for unknown
+  ones (exit 2).
+- `ChunkTokenCount.ForFinalChunk` — final recount of `prefix + text`.
 
-### Нарезка (`Chunking/`)
+### Chunking (`Chunking/`)
 
-- `ChunkingOptions` — единица (`Unit`), `MaxSize`, min/overlap, `Trim`, `DropSmall`,
-  `Prefix`, `Separators`.
-- `SizeMeasure` — размер в активной единице; для токенов учитывает prefix;
-  `MaxCut` даёт максимальный префикс, укладывающийся в лимит (surrogate-safe).
-- `FixedChunker` — фиксированные чанки + перекрытие.
-- `SeparatorChunker` — общий рекурсивный движок: иерархия разделителей, жадная упаковка,
-  hard-split fallback, перекрытие между выданными чанками.
-- `RecursiveChunker` — `SeparatorChunker` с `options.Separators`.
-- `ParagraphChunker` — сначала `\n\n`, затем остальные разделители.
-- **Semantic** (`Chunking/Semantic/`): `SemanticAtomizer` (Markdown/предложения/код/сокращения),
-  `SemanticPlanner` (эмбеддинги → `1 − cos` → перцентиль/окно), `SemanticPlan`, `SemanticChunker`.
-  Эмбеддинги (`Embeddings/`): `IEmbeddingProvider`, `LlamaCppEmbeddingProvider` (HTTP
-  `/v1/embeddings`, батчи/конкурентность, дедупликация текстов, ретраи 429/5xx,
-  таймаут), `HashEmbeddingProvider` (офлайн), `EmbeddingCache` + `CachedEmbeddingProvider`.
-- `ChunkerFactory` — `fixed|recursive|paragraph|semantic` (по умолчанию recursive).
-- `ChunkingOptionsValidator` — `max > 0`, `min <= max`, `overlap < max` (exit 2).
+- `ChunkingOptions` — unit (`Unit`), `MaxSize`, min/overlap, `Trim`,
+  `DropSmall`, `Prefix`, `Separators`.
+- `SizeMeasure` — size in the active unit; for tokens the prefix is taken
+  into account; `MaxCut` gives the maximal prefix that fits in the limit
+  (surrogate-safe).
+- `FixedChunker` — fixed chunks + overlap.
+- `SeparatorChunker` — common recursive engine: separator hierarchy, greedy
+  packing, hard-split fallback, overlap between emitted chunks.
+- `RecursiveChunker` — `SeparatorChunker` with `options.Separators`.
+- `ParagraphChunker` — first `\n\n`, then the remaining separators.
+- **Semantic** (`Chunking/Semantic/`): `SemanticAtomizer` (Markdown/sentences/
+  code/abbreviations), `SemanticPlanner` (embeddings → `1 − cos` →
+  percentile/window), `SemanticPlan`, `SemanticChunker`. Embeddings
+  (`Embeddings/`): `IEmbeddingProvider`, `LlamaCppEmbeddingProvider` (HTTP
+  `/v1/embeddings`, batches/concurrency, text deduplication, retries on
+  429/5xx, timeout), `HashEmbeddingProvider` (offline),
+  `EmbeddingCache` + `CachedEmbeddingProvider`.
+- `ChunkerFactory` — `fixed|recursive|paragraph|semantic` (recursive by
+  default).
+- `ChunkingOptionsValidator` — `max > 0`, `min <= max`, `overlap < max`
+  (exit 2).
 
-### Сервис (`ChunkingService`)
+### Service (`ChunkingService`)
 
-- Читает строки потоково, поддерживает буфер и `bufferStart` (абсолютные смещения).
-- Вызывает стратегию, пока та делает прогресс; `final=true` на EOF.
-- Собирает `Chunk`: `id = "{source}:{seq:D6}"`, `seq`, `source`, `text`,
-  `startChar`, `endChar`, `charCount`, `byteCount`, `tokenCount`, `metadata`.
-- `metadata`: стратегия, токенизатор/модель, единица, `maxSize`, `normalized`,
-  `prefix`/`prefixTokens`, пользовательские ключи. `--metadata source=` переопределяет `source`/`id`.
-- Держит последние два чанка для `--min-*`/`--drop-small`; при отмене (Ctrl+C)
-  дописывает уже собранные полные чанки.
-- Считает статистику (`--stats`): `chunkCount`, `min/avg/maxChunkTokens`,
+- Reads lines streamingly, maintains a buffer and `bufferStart` (absolute
+  offsets).
+- Calls the strategy until it stops making progress; `final=true` at EOF.
+- Assembles `Chunk`: `id = "{source}:{seq:D6}"`, `seq`, `source`, `text`,
+  `startChar`, `endChar`, `charCount`, `byteCount`, `tokenCount`,
+  `metadata`.
+- `metadata`: strategy, tokenizer/model, unit, `maxSize`, `normalized`,
+  `prefix`/`prefixTokens`, user keys. `--metadata source=` overrides
+  `source`/`id`.
+- Keeps the last two chunks for `--min-*`/`--drop-small`; on cancellation
+  (Ctrl+C) it writes out the already assembled complete chunks.
+- Computes stats (`--stats`): `chunkCount`, `min/avg/maxChunkTokens`,
   `inputBytes`, `inputChars`, `elapsedMs`.
 
-### Вывод (`Writers/`)
+### Writers (`Writers/`)
 
-- `JsonLinesWriter` — один JSON-объект на строку, UTF-8 без BOM, camelCase-поля.
-- `TextChunkWriter` — `=== CHUNK NNNNNN ===` + текст.
-- Оба пишут целую строку за операцию — частичных JSON-записей не бывает.
+- `JsonLinesWriter` — one JSON object per line, UTF-8 without BOM,
+  camelCase fields.
+- `TextChunkWriter` — `=== CHUNK NNNNNN ===` + text.
+- Both write a complete line per operation — there are no partial JSON
+  records.
 
 ### CLI (`Cli/`)
 
-- `CliRunner` на `System.CommandLine`: разбор аргументов, значения по умолчанию,
-  проверка `--invalid-encoding`/`--format`/`--normalize`/`--metadata`, запуск конвейера.
-- Коды: 0 успех; 2 аргументы; 3 файл; 4 чтение/кодировка; 5 токенизатор; 6 запись; 1 прочее.
-- При перенаправлении stdout/stderr — UTF-8 без BOM; интерактивная консоль переключается на UTF-8.
-- `--version` печатает `AssemblyInformationalVersion`; `--help` — стандартный.
+- `CliRunner` on `System.CommandLine`: argument parsing, default values,
+  checks for `--invalid-encoding`/`--format`/`--normalize`/`--metadata`,
+  pipeline start.
+- Codes: 0 success; 2 arguments; 3 file; 4 read/encoding; 5 tokenizer or
+  embedding provider error; 6 write; 1 other.
+- When stdout/stderr are redirected — UTF-8 without BOM; the interactive
+  console is switched to UTF-8.
+- `--version` prints `AssemblyInformationalVersion`; `--help` — standard.
 
 ### API (`src/TextChunker.Api/`)
 
-- ASP.NET Core Minimal APIs (net10.0), ссылается на `TextChunker`/`TextChunker.Abstractions`.
-- Маршруты сгруппированы под `/api/v1` (`app.MapGroup`):
-  `POST /api/v1/chunk` — JSON `{chunks, stats}`; `POST /api/v1/chunk/stream` — NDJSON
-  (`application/x-ndjson`) через bounded `Channel<Chunk>` (backpressure, async-запись);
-  `POST /api/v1/chunk/file` — multipart-загрузка `.txt`/`.md`/`.markdown` (кодировки, BOM);
-  `GET /api/v1/health|tokenizers|strategies`.
-- `SemanticApiKeyFilter` — единый endpoint filter для проверки `X-API-Key` у semantic-запросов,
-  если задан `TEXTCHUNKER_EMBEDDING_API_KEY`.
-- `ChunkingEngine` собирает `ChunkingOptions`/`ITokenizer`/`IChunker` из `ChunkRequest`;
-  `InMemoryTextSource` даёт строки с абсолютными смещениями; `TokenizerCache` (singleton)
-  переиспользует загруженные токенизаторы. Настройки читаются через `IOptionsMonitor`.
-- Ошибки — RFC 7807: 400 (валидация), 401 (semantic без ключа), 413 (`MaxTextChars`/тело),
-  415 (расширение файла), 503 (токенизатор), 500.
-- Документация: Swashbuckle генерирует OpenAPI (`/openapi/v1.json`), Scalar UI — `/scalar`;
-  XML-комментарии контрактов попадают в описания схем. Включается секцией `ApiDocs`.
-- Ограничения: текст запроса не логируется; персистентности и фоновых задач нет.
+- ASP.NET Core Minimal APIs (net10.0), references
+  `TextChunker`/`TextChunker.Abstractions`.
+- Routes grouped under `/api/v1` (`app.MapGroup`):
+  `POST /api/v1/chunk` — JSON `{chunks, stats}`;
+  `POST /api/v1/chunk/stream` — NDJSON (`application/x-ndjson`) via a bounded
+  `Channel<Chunk>` (backpressure, async writes);
+  `POST /api/v1/chunk/file` — multipart upload of `.txt`/`.md`/`.markdown`
+  (encodings, BOM); `GET /api/v1/health|tokenizers|strategies`.
+- `SemanticApiKeyFilter` — a single endpoint filter for `X-API-Key`
+  validation on semantic requests when `TEXTCHUNKER_EMBEDDING_API_KEY` is
+  set.
+- `ChunkingEngine` assembles `ChunkingOptions`/`ITokenizer`/`IChunker` from
+  `ChunkRequest`; `InMemoryTextSource` provides lines with absolute offsets;
+  `TokenizerCache` (singleton) reuses loaded tokenizers. Settings are read
+  via `IOptionsMonitor`.
+- Errors — RFC 7807: 400 (validation), 401 (semantic without a key), 413
+  (`MaxTextChars`/body), 415 (file extension), 503 (tokenizer or embedding
+  provider), 500.
+- Documentation: Swashbuckle generates OpenAPI (`/openapi/v1.json`), Scalar
+  UI — `/scalar`; XML comments of contracts land in schema descriptions.
+  Enabled via the `ApiDocs` section.
+- Limitations: request text is not logged; no persistence and no background
+  tasks.
 
-## Контракт потоковой нарезки
+## Streaming Chunking Contract
 
-`ITokenizer` и `IChunker` — stateless; состояние (буфер, смещения, seq) хранит сервис.
+`ITokenizer` and `IChunker` — stateless; state (buffer, offsets, seq) is
+held by the service.
 
 `ChunkSplit`:
-- `Segments` — готовые чанки с **относительными** смещениями внутри переданного текста;
-- `ConsumedEnd` — сколько символов буфера обработано (сервис делает `buffer.Remove(0, ConsumedEnd)`);
-- `MoreNeeded` — фрагмент закончился внутри потенциального чанка, нужен ещё текст;
-- `final` — вход закончился, остаток нужно выдать.
+- `Segments` — ready chunks with **relative** offsets inside the passed text;
+- `ConsumedEnd` — how many characters of the buffer have been processed
+  (the service does `buffer.Remove(0, ConsumedEnd)`);
+- `MoreNeeded` — the fragment ended inside a potential chunk, more text is
+  needed;
+- `final` — input is over, the remainder must be emitted.
 
-Инварианты: лимит соблюдён; нет пустых чанков; смещения не убывают; при непустом
-буфере стратегия либо выдаёт чанк, либо возвращает `MoreNeeded`/`ConsumedEnd` с прогрессом.
+Invariants: the limit is respected; no empty chunks; offsets never decrease;
+if the buffer is non-empty the strategy either emits a chunk or returns
+`MoreNeeded`/`ConsumedEnd` with progress.
 
-## Расширение
+## Extension Points
 
-- **Токенизатор:** реализовать `ITokenizer`, добавить имя в `TokenizerFactory.SupportedNames`.
-- **Стратегия:** реализовать `IChunker`, добавить имя в `ChunkerFactory`.
-- **Формат вывода:** реализовать `IChunkWriter`, выбрать его в `CliRunner.CreateWriter`.
-- **Источник:** реализовать `ITextSource` (строки + смещения в join-пространстве).
+- **Tokenizer:** implement `ITokenizer`, add the name to
+  `TokenizerFactory.SupportedNames`.
+- **Strategy:** implement `IChunker`, add the name to `ChunkerFactory`.
+- **Output format:** implement `IChunkWriter`, select it in
+  `CliRunner.CreateWriter`.
+- **Source:** implement `ITextSource` (lines + offsets in the
+  join space).
 
-## Структура проекта
+## Project Layout
 
 ```
 textchunker/
-├── src/TextChunker.Abstractions/   интерфейсы, Chunk, ChunkingOptions, ChunkTokenCount
+├── src/TextChunker.Abstractions/   interfaces, Chunk, ChunkingOptions, ChunkTokenCount
 ├── src/TextChunker/
-│   ├── Sources/                    файл/stdin, кодировки, BOM, нормализация
-│   ├── Tokenizers/                 none/char/word/regex/huggingface + фабрика
-│   ├── Chunking/                   стратегии, SizeMeasure, сервис, валидация
+│   ├── Sources/                    file/stdin, encodings, BOM, normalization
+│   ├── Tokenizers/                 none/char/word/regex/huggingface + factory
+│   ├── Chunking/                   strategies, SizeMeasure, service, validation
 │   ├── Writers/                    JSONL/text
 │   ├── Cli/                        CliRunner + Program.cs
-│   └── bin/, obj/                  артефакты сборки (gitignored)
+│   └── bin/, obj/                  build artifacts (gitignored)
 ├── src/TextChunker.Api/            Minimal APIs: contracts, services, Program.cs
 ├── tests/TextChunker.Tests/        unit + property + cancellation
-├── tests/TextChunker.IntegrationTests/  CLI-процессы, golden, нагрузочные
-├── tests/TextChunker.Api.Tests/    HTTP-тесты (Kestrel + HttpClient)
-├── docs/                           usage, chunking-strategies, tokenizers, api, troubleshooting, architecture
+├── tests/TextChunker.IntegrationTests/  CLI processes, golden, load tests
+├── tests/TextChunker.Api.Tests/    HTTP tests (Kestrel + HttpClient)
+├── docs/                           usage, building, chunking-strategies, tokenizers, api, troubleshooting, architecture
 ├── README.md
 └── TextChunker.slnx
 ```
 
-## Тесты и CI
+## Tests and CI
 
-- Unit: токенизаторы, чанкеры, сервис, property-инварианты, отмена.
-- Integration: реальный процесс `dotnet TextChunker.dll` — коды выхода, JSONL, stdin,
-  `--stats`, golden, 10 МБ (100 МБ/1 ГБ — по `TEXTCHUNKER_LOAD_TESTS`).
-- API: запуск реального `TextChunker.Api.dll` на свободном порту и HTTP-проверки
-  (health, chunk, stream, 400/401/413/415/503, source/metadata, `X-API-Key`, кэш токенизаторов).
-- CI (`.github/workflows/ci.yml`): матрица Ubuntu/Windows/macOS, .NET 10 (`net10.0`, SDK для `.slnx`).
+- Unit: tokenizers, chunkers, service, property invariants, cancellation.
+- Integration: a real `dotnet TextChunker.dll` process — exit codes, JSONL,
+  stdin, `--stats`, golden, 10 MB (100 MB/1 GB via
+  `TEXTCHUNKER_LOAD_TESTS`).
+- API: launching a real `TextChunker.Api.dll` on a free port and HTTP
+  checks (health, chunk, stream, 400/401/413/415/503, source/metadata,
+  `X-API-Key`, tokenizer cache).
+- CI (`.github/workflows/ci.yml`): Ubuntu/Windows/macOS matrix, .NET 10
+  (`net10.0`, SDK for `.slnx`).
 
-## Дальнейшие улучшения
+## Future Improvements
 
-Рекомендации из обзоров `dotnet-best-practices`, `dotnet-design-pattern-review`,
-`csharp-concurrency-patterns` и `csharp-nullable-reference-types`:
+Recommendations from the `dotnet-best-practices`,
+`dotnet-design-pattern-review`, `csharp-concurrency-patterns` and
+`csharp-nullable-reference-types` reviews:
 
-- перевести `ChunkingEngine` и другие сервисы на primary-constructor синтаксис — выполнено;
-- добавить data-annotation валидацию в `ApiOptions` и включить `ValidateDataAnnotations()` —
-  выполнено;
-- добавить `ConfigureAwait(false)` в библиотечных async-вызовах — проверено, уже используется;
-- дополнить XML-документацию оставшихся публичных типов и методов — выполнено для ключевых
-  типов API;
-- оценить лёгкую абстракцию command-handler для будущих команд CLI — future work;
-- оценить repository-абстракцию при появлении персистентности — future work;
-- оценить `ResourceManager` для локализации логов и сообщений об ошибках — future work.
+- migrate `ChunkingEngine` and other services to primary-constructor
+  syntax — done;
+- add data-annotation validation to `ApiOptions` and enable
+  `ValidateDataAnnotations()` — done;
+- add `ConfigureAwait(false)` to async calls in library code — checked,
+  already used;
+- extend XML documentation for the remaining public types and methods — done
+  for the key API types;
+- evaluate a lightweight command-handler abstraction for future CLI commands
+  — future work;
+- evaluate a repository abstraction when persistence appears — future work;
+- evaluate `ResourceManager` for log and error-message localization —
+  future work.
 
-Актуальный чек-лист ведётся в `openspec/changes/api-design-recommendations/tasks.md`.
+The up-to-date checklist is kept in
+`openspec/changes/api-design-recommendations/tasks.md`.

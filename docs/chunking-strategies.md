@@ -1,80 +1,83 @@
-# Стратегии нарезки
+# Chunking Strategies
 
-## Единицы измерения
+## Units
 
-Активная единица определяется заданным `--max-*`:
+The active unit is determined by the specified `--max-*`:
 
-| Параметр | Единица | Как считается |
+| Parameter | Unit | How it is measured |
 |---|---|---|
-| `--max-tokens` | токены | выбранным токенизатором (`prefix + text`) |
-| `--max-chars` | символы | UTF-16 code units |
-| `--max-words` | слова | отрезки не-пробельных символов |
-| `--max-bytes` | байты | UTF-8 |
+| `--max-tokens` | tokens | by the selected tokenizer (`prefix + text`) |
+| `--max-chars` | characters | UTF-16 code units |
+| `--max-words` | words | runs of non-whitespace characters |
+| `--max-bytes` | bytes | UTF-8 |
 
-Приоритет при нескольких `--max-*`: tokens > chars > words > bytes.
-Гарантия: размер каждого чанка в активной единице `<= max`.
+Priority when several `--max-*` are set: tokens > chars > words > bytes.
+Guarantee: size of every chunk in the active unit is `<= max`.
 
-По умолчанию (если не задан ни один `--max-*`) — `--max-tokens 512`.
+By default (when no `--max-*` is set) — `--max-tokens 512`.
 
 ## fixed
 
-Каждый чанк — максимальный префикс остатка, укладывающийся в лимит.
+Each chunk is a maximal prefix of the remainder that fits within the limit.
 
 ```bash
 textchunker --input doc.txt --strategy fixed --max-chars 500
 textchunker --input doc.txt --strategy fixed --max-tokens 100 --overlap-tokens 20
 ```
 
-- Перекрытие: следующий чанк начинается на `overlap` единиц раньше конца предыдущего.
-  Для токенов граница вычисляется токенизатором, для символов — арифметически.
-- Прогресс гарантирован: перекрытие всегда меньше лимита (валидация `overlap < max`),
-  и чанк не может быть меньше одной единицы.
-- Суррогатные пары не разрываются.
+- Overlap: the next chunk starts `overlap` units before the end of the previous
+  one. For tokens the boundary is computed by the tokenizer; for characters —
+  arithmetically.
+- Progress is guaranteed: overlap is always smaller than the limit (validation
+  `overlap < max`), and a chunk cannot be smaller than one unit.
+- Surrogate pairs are never split.
 
-## recursive (по умолчанию)
+## recursive (default)
 
-Иерархическая разбивка по списку разделителей от крупного к мелкому:
+Hierarchical splitting by a separator list, from coarse to fine:
 
 ```
-"\n\n" → "\n" → ". " → "! " → "? " → "; " → ", " → " " → "" (жёсткий срез)
+"\n\n" → "\n" → ". " → "! " → "? " → "; " → ", " → " " → "" (hard cut)
 ```
 
-Алгоритм:
+Algorithm:
 
-1. Текст рекурсивно дробится разделителями до частей, каждая из которых укладывается
-   в лимит.
-2. Части жадно упаковываются в чанки: добавляем часть, пока размер не превысит лимит.
-3. Если часть не помещается даже одна — она дробится следующим разделителем, а в конце
-   список заканчивается жёстким срезом по лимиту.
+1. The text is recursively split by separators into parts, each of which fits
+   within the limit.
+2. Parts are greedily packed into chunks: a part is added until the size would
+   exceed the limit.
+3. If a part does not fit even on its own, it is split by the next separator,
+   and at the end the list ends with a hard cut by the limit.
 
 ```bash
 textchunker --input doc.txt --strategy recursive --max-tokens 512
 ```
 
-### Свои разделители
+### Custom separators
 
-`--separators` принимает несколько значений в порядке приоритета. Поддерживаются
-escape-последовательности `\n`, `\r`, `\t`; префикс `$` позволяет передать литерал
-без обработки.
+`--separators` takes several values in priority order. Escape sequences `\n`,
+`\r`, `\t` are supported; the `$` prefix allows passing a literal without
+processing.
 
 ```bash
 textchunker --input doc.txt --strategy recursive --separators "\n\n" "\n" ". " " "
 textchunker --input doc.txt --strategy recursive --separators "$|" "$||"
 ```
 
-Пустая строка (`""`) означает жёсткий срез.
+An empty string (`""`) means a hard cut.
 
-**Известное ограничение:** русские сокращения (`т. д.`, `т. п.`, `см.`, `стр.`) не распознаются
-как отдельный случай. При жёстком fallback граница может пройти внутри сокращения; текст
-не теряется, лимит соблюдается, но семантически ровные границы предложений не гарантируются.
+**Known limitation:** Russian abbreviations (`т. д.`, `т. п.`, `см.`, `стр.`)
+are not recognized as a separate case. On the hard-cut fallback the boundary
+may pass inside an abbreviation; the text is not lost and the limit is observed,
+but semantically even sentence boundaries are not guaranteed.
 
 ## paragraph
 
-Сначала текст делится по пустым строкам (`\n\n`), затем:
+First the text is split on blank lines (`\n\n`), then:
 
-- малые абзацы объединяются в чанки до лимита;
-- абзац, превышающий лимит, суб-разбивается оставшимися разделителями
-  (recursive/hard fallback).
+- small paragraphs are merged into chunks up to the limit;
+- a paragraph exceeding the limit is sub-split by the remaining separators
+  (recursive/hard-cut fallback).
 
 ```bash
 textchunker --input doc.txt --strategy paragraph --max-tokens 512
@@ -82,8 +85,8 @@ textchunker --input doc.txt --strategy paragraph --max-tokens 512
 
 ## semantic
 
-Границы ставятся по смыслу: атомы (предложения/абзацы/заголовки/код/списки)
-сравниваются эмбеддингами, чанк заканчивается там, где меняется тема.
+Boundaries are set by meaning: atoms (sentences/paragraphs/headings/code/lists)
+are compared with embeddings, and a chunk ends where the topic changes.
 
 ```bash
 textchunker --input doc.md --strategy semantic \
@@ -91,53 +94,63 @@ textchunker --input doc.md --strategy semantic \
   --embedding-model embeddinggemma-2 --max-tokens 512
 ```
 
-- По умолчанию работает в document-mode: текст буферизуется до `--semantic-max-bytes`
-  (20 МБ), затем строится план границ и выполняется нарезка.
-- Для больших файлов: `--semantic-fallback streaming` — окна по
-  `--semantic-stream-window-bytes` (4 МБ) с перекрытием; память ограничена окном.
-- Границы: перцентиль расстояний `1 − cos` (`--semantic-percentile`), минимальная
-  дистанция (`--semantic-min-distance`), опциональное окно TextTiling (`--semantic-window`).
-- Гарантии лимитов, `--prefix`, `--min-*`, `--drop-small`, `--trim` и `--overlap-*`
-  такие же, как у остальных стратегий; перекрытие набирается целыми атомами.
-- Без streaming большие документы откатываются на `recursive`
-  (`--semantic-fallback recursive`) или завершаются ошибкой (`--semantic-fallback error`).
-- Без сервера: `--embedding-provider hash` (детерминированный, офлайн).
+- By default it works in document-mode: text is buffered up to
+  `--semantic-max-bytes` (20 MB), then a boundary plan is built and chunking
+  is executed.
+- For large files: `--semantic-fallback streaming` — windows of
+  `--semantic-stream-window-bytes` (4 MB) with overlap; memory is bounded by
+  the window.
+- Boundaries: percentile of `1 − cos` distances (`--semantic-percentile`),
+  minimum distance (`--semantic-min-distance`), optional TextTiling window
+  (`--semantic-window`).
+- Limits, `--prefix`, `--min-*`, `--drop-small`, `--trim`, and `--overlap-*`
+  have the same guarantees as with the other strategies; overlap is accumulated
+  from whole atoms.
+- Without streaming, large documents fall back to `recursive`
+  (`--semantic-fallback recursive`) or finish with an error
+  (`--semantic-fallback error`).
+- Without a server: `--embedding-provider hash` (deterministic, offline).
 
-Подробности и тюнинг — [semantic-chunking.md](semantic-chunking.md).
+Details and tuning — [semantic-chunking.md](semantic-chunking.md).
 
-## Минимум и финальный чанк
+## Minimum and final chunk
 
-- `--min-tokens` / `--min-chars` / `--min-words` задают минимум для **финального** чанка.
-- `--drop-small` — отбросить финальный чанк, если он меньше минимума.
-- Без `--drop-small` финальный чанк сохраняется; если он меньше минимума и объединение
-  с предыдущим чанком не превышает лимит, чанки объединяются (через `\n\n` для
-  `paragraph`, иначе через пробел).
+- `--min-tokens` / `--min-chars` / `--min-words` set the minimum for the
+  **final** chunk.
+- `--drop-small` — discard the final chunk if it is smaller than the minimum.
+- Without `--drop-small` the final chunk is kept; if it is smaller than the
+  minimum and merging it with the previous chunk does not exceed the limit,
+  the chunks are merged (`\n\n` for `paragraph`, otherwise a space).
 
 ```bash
 textchunker --input doc.txt --max-tokens 512 --min-tokens 50 --drop-small
 ```
 
-## Trim и смещения
+## Trim and offsets
 
-`--trim` включён по умолчанию: пробелы/переводы строк по краям чанка не входят
-в `text`, и `startChar`/`endChar` указывают на обрезанные границы.
-`--no-trim` сохраняет пробелы (удобно для точного восстановления исходного текста).
+`--trim` is on by default: whitespace/newlines at the edges of a chunk do not
+enter `text`, and `startChar`/`endChar` point at the trimmed boundaries.
+`--no-trim` preserves edge whitespace (convenient for exact restoration of the
+input).
 
-## Потоковая обработка
+## Streaming processing
 
-Источник читается построчно; стратегия получает буфер и возвращает:
+The source is read line by line; the strategy receives a buffer and returns:
 
-- `Segments` — готовые чанки (текст + смещения внутри буфера);
-- `ConsumedEnd` — сколько символов буфера обработано;
-- `MoreNeeded` — нужен ли ещё текст (фрагмент закончился внутри потенциального чанка).
+- `Segments` — ready chunks (text + offsets within the buffer);
+- `ConsumedEnd` — how many characters of the buffer have been processed;
+- `MoreNeeded` — the fragment ended inside a potential chunk, more text is
+  needed.
 
-Поэтому память ограничена размером буфера (примерно один чанк + одна строка),
-а чанки выводятся по мере чтения, а не после загрузки всего файла.
+This is why memory is bounded by the buffer size (approximately one chunk + one
+line), and chunks are emitted as they are read, not after loading the whole file.
 
-## Инварианты (проверяются тестами)
+## Invariants (checked by tests)
 
-- размер каждого чанка `<= max` в активной единице;
-- нет пустых чанков;
-- `startChar`/`endChar` не убывают и лежат в исходном тексте;
-- при `fixed` + `--no-trim` без перекрытия конкатенация чанков восстанавливает вход;
-- повторный запуск с теми же входом и параметрами даёт идентичные `id`/`seq`/текст.
+- size of every chunk in the active unit is `<= max`;
+- there are no empty chunks;
+- `startChar`/`endChar` never decrease and stay within the input text;
+- for `fixed` + `--no-trim` without overlap, concatenating chunks restores the
+  input;
+- repeated runs with the same input and parameters produce identical
+  `id`/`seq`/text.

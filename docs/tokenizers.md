@@ -1,19 +1,19 @@
-# Токенизаторы
+# Tokenizers
 
-## Режимы
+## Modes
 
-| `--tokenizer` | Единица | Точность | Описание |
+| `--tokenizer` | Unit | Precision | Description |
 |---|---|---|---|
-| `huggingface` | токены модели | точная | `Microsoft.ML.Tokenizers` + `tokenizer.json` |
-| `word` (по умолчанию) | слова | приближённая | максимальные отрезки не-пробельных символов |
-| `char` | code points | приближённая | по Unicode code points (runes); эмодзи-цепочки — 1 токен |
-| `regex` | совпадения | приближённая | `[\p{L}\p{N}]+` (слова без пунктуации) |
-| `none` | — | — | `CountTokens = 0`, токенные лимиты не действуют |
+| `huggingface` | model tokens | exact | `Microsoft.ML.Tokenizers` + `tokenizer.json` |
+| `word` (default) | words | approximate | maximal runs of non-whitespace characters |
+| `char` | code points | approximate | per Unicode code points (runes); emoji sequences — 1 token |
+| `regex` | matches | approximate | `[\p{L}\p{N}]+` (words without punctuation) |
+| `none` | — | — | `CountTokens = 0`, token limits do not apply |
 
-Если `--tokenizer` не указан, используется `word`, а в stderr выводится предупреждение
-о приблизительности.
+If `--tokenizer` is not specified, `word` is used and a warning about the
+approximation is written to stderr.
 
-## huggingface (точный режим)
+## huggingface (exact mode)
 
 ```bash
 textchunker --input doc.txt \
@@ -22,80 +22,82 @@ textchunker --input doc.txt \
   --max-tokens 512
 ```
 
-- Модель по умолчанию — `google/embeddinggemma-2` (byte-level BPE, словарь 262 144,
+- Default model — `google/embeddinggemma-2` (byte-level BPE, vocabulary 262 144,
   `byte_fallback: true`).
-- `tokenizer.json` (~32 МБ) скачивается один раз:
+- `tokenizer.json` (~32 MB) is downloaded once:
   `https://huggingface.co/<model>/resolve/main/tokenizer.json`.
-- Кэш: `--tokenizer-cache-dir` или по умолчанию
+- Cache: `--tokenizer-cache-dir` or by default
   `%LOCALAPPDATA%/TextChunker/tokenizers/<sanitized-model>/tokenizer.json`
-  (на Linux/macOS — `$XDG_DATA_HOME` / `~/.local/share`, через `LocalApplicationData`).
-- После первой загрузки сеть не требуется — файл читается из кэша.
-- Локальный файл можно указать напрямую:
+  (Linux/macOS — `$XDG_DATA_HOME` / `~/.local/share`, via `LocalApplicationData`).
+- After the initial download, no network access is required — the file is read
+  from the cache.
+- A local file can be specified directly:
 
 ```bash
 textchunker --input doc.txt --tokenizer huggingface \
   --tokenizer-path ./tokenizer.json --max-tokens 512
 ```
 
-Если загрузка/чтение/инициализация модели не удались, ошибка пишется в stderr,
-код завершения — 5.
+If the model could not be downloaded, read, or initialized, an error is written
+to stderr, exit code — 5.
 
-### Почему это точный подсчёт
+### Why the Count Is Exact
 
-`Microsoft.ML.Tokenizers` читает тот же `tokenizer.json` и реализует тот же BPE-движок,
-что HF `transformers`/`tokenizers` (Rust). Подсчёт выполняется по выбранному токенизатору,
-без эвристик вида `symbols / 4`.
+`Microsoft.ML.Tokenizers` reads the same `tokenizer.json` and implements the same
+BPE engine as HF `transformers`/`tokenizers` (Rust). Token counting is performed
+with the chosen tokenizer, without heuristics such as `symbols / 4`.
 
-Проверенные опорные значения (модель `google/embeddinggemma-2`):
+Verified reference values (model `google/embeddinggemma-2`):
 
-| Текст | Токенов |
+| Text | Tokens |
 |---|---|
 | `hello world` | 2 |
-| `hello  world` | 2 (повторные пробелы схлопываются) |
+| `hello  world` | 2 (repeated whitespace collapses) |
 | `a b c` | 3 |
-| `日本語` | 9 (byte fallback: 3 символа × 3 байта) |
+| `日本語` | 9 (byte fallback: 3 characters × 3 bytes) |
 | `one\n\n two` | 2 |
 
-Пробел сам по себе не является отдельным токеном.
+Whitespace by itself is not a separate token.
 
-### Лимит и task-префикс
+### Limits and task prefix
 
-Когда задан `--prefix`, лимит применяется к `prefix + chunk.text`:
+When `--prefix` is specified, the limit is applied to `prefix + chunk.text`:
 
 ```
 tokenCount(prefix + chunk.text) <= --max-tokens
 ```
 
-В метаданных чанка: `prefix`, `prefixTokens`. Финальный `tokenCount` каждого чанка
-считается заново по итоговому тексту (склейка может менять число токенов на границе).
+Chunk metadata: `prefix`, `prefixTokens`. The final `tokenCount` of each chunk
+is recomputed for the resulting text (gluing can change the token count at the
+boundary).
 
-## Связь с эмбеддингами (semantic)
+## Relationship with embeddings (semantic)
 
-Токенизатор и провайдер эмбеддингов — **независимые** подсистемы:
+Tokenizer and embedding provider are **independent** subsystems:
 
-- `--tokenizer huggingface` нужен только для точного подсчёта лимита чанка
-  и читает `tokenizer.json` локально (или из кэша HF).
-- `--strategy semantic` отправляет **текст** атомов на сервер эмбеддингов
-  (`/v1/embeddings`); сервер сам токенизирует его своей моделью.
-- Один и тот же `tokenizer.json` не требуется серверу, а серверу не нужен
-  `--tokenizer-path` у CLI.
-- Если `embeddinggemma-2` используется и там и там, удобно указать один
-  локальный файл для CLI и запустить llama.cpp с тем же GGUF.
+- `--tokenizer huggingface` is needed only for exact chunk-limit counting and
+  reads `tokenizer.json` locally (or from the HF cache).
+- `--strategy semantic` sends the **text** of atoms to the embedding server
+  (`/v1/embeddings`); the server tokenizes it with its own model.
+- The server does not need the same `tokenizer.json`, and the CLI does not need
+  `--tokenizer-path` for the server.
+- If `embeddinggemma-2` is used in both places, it is convenient to specify
+  one local file for the CLI and run llama.cpp with the same GGUF.
 
-## Кэш и offline
+## Cache and offline
 
 ```
 %LOCALAPPDATA%\TextChunker\tokenizers\google_embeddinggemma-2\tokenizer.json
 ```
 
-Удаление каталога приведёт к повторной загрузке при следующем запуске.
-Для полностью offline-режима скопируйте `tokenizer.json` в кэш вручную или
-используйте `--tokenizer-path`.
+Deleting the directory will trigger a re-download on the next run. For a fully
+offline setup, copy `tokenizer.json` into the cache manually or use
+`--tokenizer-path`.
 
-## Производительность
+## Performance
 
-- Загрузка словаря 262k и ~515k merge-правил занимает порядка секунды и ~несколько
-  сотен МБ памяти; выполняется один раз за процесс.
-- Подсчёт токенов — O(длины текста); нарезка выполняет несколько пересчётов на чанк.
-- Для очень больших файлов используйте `--max-tokens` и streaming-источник: чанки
-  выводятся по мере чтения.
+- Loading the 262k vocabulary and ~515k merge rules takes about a second and a
+  few hundred MB of memory; it happens once per process.
+- Token counting is O(text length); chunking performs several counts per chunk.
+- For very large files, use `--max-tokens` and the streaming source: chunks
+  are emitted as they are read.

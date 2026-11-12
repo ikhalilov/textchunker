@@ -1,178 +1,206 @@
-# Диагностика и частые проблемы
+# Diagnostics and Common Issues
 
-## Кириллица отображается как `?`
+## Cyrillic is displayed as `?`
 
-Причина — консоль/окно отладчика использует кодовую страницу без кириллицы.
-Утилита:
-- при перенаправлении stdout/stderr пишет UTF-8 без BOM;
-- при наличии интерактивной консоли переключает `Console.OutputEncoding`/`InputEncoding` на UTF-8.
+Cause: the console/debug window uses a code page without Cyrillic support.
+The utility:
 
-Если `?` остались:
-1. Включите UTF-8 в терминале (`chcp 65001` в cmd, настройки кодировки в Windows Terminal / VS / Rider).
-2. Выберите шрифт с кириллицей (Consolas, Cascadia Mono).
-3. Убедитесь, что сторонние обёртки/логгеры не перекодируют поток в cp1251/cp866.
+- when stdout/stderr are redirected, writes UTF-8 without BOM;
+- when an interactive console is available, switches
+  `Console.OutputEncoding`/`InputEncoding` to UTF-8.
 
-## `stdin не переопределён (интерактивный терминал)`
+If `?` remains:
 
-Утилита не блокируется на интерактивном stdin (`Console.IsInputRedirected == false`). Варианты:
+1. Enable UTF-8 in the terminal (`chcp 65001` in cmd, encoding settings in
+   Windows Terminal / VS / Rider).
+2. Choose a Cyrillic-capable font (Consolas, Cascadia Mono).
+3. Make sure that third-party wrappers/loggers are not re-encoding the stream
+   to cp1251/cp866.
+
+## `stdin not redirected (interactive terminal)`
+
+The utility does not block on an interactive stdin (`Console.IsInputRedirected ==
+false`). Options:
 
 ```bash
 textchunker --input document.txt
 cat document.txt | textchunker --input -
 ```
 
-В отладчике настройте перенаправление stdin на файл (или используйте `--input <файл>`).
+In the debugger, configure stdin redirection to a file (or use
+`--input <file>`).
 
-## Токенизатор модели не загружается (exit 5)
+## Model tokenizer does not load (exit 5)
 
-Проверьте:
-- заданы `--tokenizer huggingface` и корректный `--tokenizer-model` (по умолчанию `google/embeddinggemma-2`);
-- кэш: `%LOCALAPPDATA%\TextChunker\tokenizers\<sanitized-model>\tokenizer.json`
+Check:
+
+- `--tokenizer huggingface` is set and `--tokenizer-model` is correct
+  (default `google/embeddinggemma-2`);
+- cache: `%LOCALAPPDATA%\TextChunker\tokenizers\<sanitized-model>\tokenizer.json`
   (Linux/macOS — `LocalApplicationData/TextChunker/tokenizers/...`);
-- доступ к сети при первой загрузке (либо `--tokenizer-path` на локальный `tokenizer.json`);
-- файл ~32 МБ и является валидным JSON.
+- network access on first download (or a local `tokenizer.json` via
+  `--tokenizer-path`);
+- the file is ~32 MB and is valid JSON.
 
-Ошибка пишется в stderr, код — 5. После появления файла в кэше работа идёт offline.
+The error is written to stderr, code — 5. Once the file is in the cache the
+tool works offline.
 
-## Неверная кодировка входа
+## Invalid input encoding
 
-- По умолчанию вход — UTF-8, BOM отбрасывается.
-- `--encoding windows-1251` (и другие кодовые страницы) — для **файлового** входа.
-- `--invalid-encoding error` — строгий режим (exit 4); по умолчанию невалидные байты заменяются на `U+FFFD`.
-- `stdin` читается через консольный `TextReader` (после настройки — UTF-8); `--encoding` к stdin не применяется.
+- Input is UTF-8 by default; the BOM is stripped.
+- `--encoding windows-1251` (and other code pages) — for **file** input.
+- `--invalid-encoding error` — strict mode (exit 4); by default invalid
+  bytes are replaced with `U+FFFD`.
+- `stdin` is read through the console `TextReader` (UTF-8 after configuration);
+  `--encoding` does not apply to stdin.
 
-## Размер чанков не тот, что ожидался
+## Chunk size is not as expected
 
-- Активная единица: `--max-tokens` > `--max-chars` > `--max-words` > `--max-bytes`.
-- Если не задан ни один `--max-*`, используется `--max-tokens 512`.
-- `--min-*` и `--drop-small` применяются к финальному чанку.
-- `--prefix` учитывается в лимите токенов (`prefix + chunk`).
-- `--overlap-*` должен быть меньше соответствующего `--max-*`, иначе exit 2.
-- `--trim` включён по умолчанию; `--no-trim` сохраняет пробелы по краям.
+- Active unit: `--max-tokens` > `--max-chars` > `--max-words` >
+  `--max-bytes`.
+- If no `--max-*` is set, `--max-tokens 512` is used.
+- `--min-*` and `--drop-small` apply to the final chunk.
+- `--prefix` is counted in the token limit (`prefix + chunk`).
+- `--overlap-*` must be smaller than the corresponding `--max-*`, otherwise
+  exit 2.
+- `--trim` is on by default; `--no-trim` preserves edge whitespace.
 
-## Память и большие файлы
+## Memory and large files
 
-Чтение потоковое: память ограничена окном нарезки, а не размером файла
-(для одной гигантской строки — её размером). Ориентиры (Debug, локальная машина,
+Reading is streaming: memory is bounded by the chunking window, not by the file
+size (for one giant line — by its size). Guidelines (Debug, local machine,
 `--strategy fixed --max-chars 1000 --tokenizer char`):
 
-| Вход | Время | Пиковый RSS | Чанков |
+| Input | Time | Peak RSS | Chunks |
 |---|---:|---:|---:|
-| 10 МБ, строки | 0.7 с | 46.6 МиБ | 7 282 |
-| 100 МБ, строки | 3.6 с | 49.8 МиБ | 72 818 |
-| 1 ГБ, строки | 30.0 с | 48.6 МиБ | 745 655 |
-| 10 МБ, одна строка | 0.5 с | 140.9 МиБ | 7 282 |
+| 10 MB, lines | 0.7 s | 46.6 MiB | 7 282 |
+| 100 MB, lines | 3.6 s | 49.8 MiB | 72 818 |
+| 1 GB, lines | 30.0 s | 48.6 MiB | 745 655 |
+| 10 MB, single line | 0.5 s | 140.9 MiB | 7 282 |
 
-## Семантическая нарезка: сервер эмбеддингов (exit 5)
+## Semantic chunking: embedding server (exit 5)
 
-`--strategy semantic` не запускает модель сам — он обращается к HTTP-серверу.
-Если чанков нет, а в stderr ошибка, проверьте:
+`--strategy semantic` does not run the model itself — it calls an HTTP server.
+If there are no chunks and stderr contains an error, check:
 
-1. Сервер запущен и отвечает:
+1. The server is running and responds:
    ```bash
    curl http://127.0.0.1:9932/health
    ```
-2. `--embedding-endpoint` совпадает с адресом сервера, а `--embedding-model` —
-   с его `-a`/`/v1/models` (например, `embeddinggemma-2`).
-3. Сервер собран с `--embedding` (иначе `/v1/embeddings` вернёт 501/404).
-4. Если сервер закрыт `--api-key`, переменная окружения
-   `TEXTCHUNKER_EMBEDDING_API_KEY` задана в окружении **процесса**.
-5. Размерность ответа совпадает с `--embedding-dimensions` (по умолчанию 768).
+2. `--embedding-endpoint` matches the server address and
+   `--embedding-model` — its `-a`/`/v1/models` (e.g., `embeddinggemma-2`).
+3. The server is built with `--embedding` (otherwise `/v1/embeddings`
+   returns 501/404).
+4. If the server is locked behind `--api-key`, the environment variable
+   `TEXTCHUNKER_EMBEDDING_API_KEY` is set in the **process** environment.
+5. The response dimension matches `--embedding-dimensions` (default 768).
 
-Код завершения — 5; API отвечает 503 `application/problem+json`.
-Первый запрос после простоя может занять ~10 с (прогрев CUDA) — это не таймаут.
+Exit code — 5; the API returns 503 `application/problem+json`. The first
+request after a server restart may take ~10 s (CUDA warmup) — this is not a
+timeout.
 
-## 401 Unauthorized для semantic в API
+## 401 Unauthorized for semantic requests in the API
 
-Если на сервере задана переменная `TEXTCHUNKER_EMBEDDING_API_KEY`, версионированные запросы
-`/api/v1/chunk*` со `strategy=semantic` требуют заголовок `X-API-Key` с тем же значением.
-Без него или с неверным значением API отвечает **401** `application/problem+json`.
+If `TEXTCHUNKER_EMBEDDING_API_KEY` is set on the server, versioned requests
+to `/api/v1/chunk*` with `strategy=semantic` require the `X-API-Key` header
+with the same value. Without it or with a wrong value the API responds
+**401** `application/problem+json`.
 
-- Добавьте `-H "X-API-Key: $TEXTCHUNKER_EMBEDDING_API_KEY"` к запросу.
+- Add `-H "X-API-Key: $TEXTCHUNKER_EMBEDDING_API_KEY"` to the request.
 
-## Слишком мало или слишком много семантических границ
+## Too few or too many semantic boundaries
 
-- **Мало границ** → уменьшите `--semantic-percentile` (например, `0.8`) или
-  поставьте `--semantic-window 1` (сравнение соседних атомов).
-- **Много мелких чанков** → увеличьте перцентиль (`0.95`) и/или
+- **Too few boundaries** → decrease `--semantic-percentile` (e.g., `0.8`) or
+  set `--semantic-window 1` (compare neighboring atoms).
+- **Too many small chunks** → increase the percentile (`0.95`) and/or
   `--semantic-min-distance`.
-- Абсолютные пороги бесполезны: у `embeddinggemma` несвязанные тексты дают
-  cosine 0.65–0.72, связанные — 0.95+. Поэтому порог всегда относительный.
-- Посмотрите `--stats`: `semanticAtomCount` показывает, на сколько атомов
-  разбился текст, `embeddingCacheHits`/`embeddingCacheMisses` — стоимость прогона.
+- Absolute thresholds do not help: for `embeddinggemma`, unrelated texts have
+  cosine 0.65–0.72, related ones — 0.95+. So thresholds are always relative
+  (percentile).
+- Look at `--stats`: `semanticAtomCount` shows how many atoms the text was
+  split into, `embeddingCacheHits`/`embeddingCacheMisses` — the cost of the
+  run.
 
-## Кэш эмбеддингов
+## Embedding cache
 
-- По умолчанию: `%LOCALAPPDATA%\TextChunker\embeddings\<model>-<hash>\<sha256>.bin`.
-- Scope включает endpoint, имя модели и размерность: две модели с одинаковым именем
-  на разных серверах не переиспользуют чужие векторы.
-- `--embedding-cache-dir` переопределяет каталог, `--no-embedding-cache` отключает кэш.
-- Ключ включает модель, промпт и текст атома; смена модели/промпта даёт промахи.
-- Битые/несовпадающие по размерности записи удаляются и пересчитываются.
-- Обслуживание: `textchunker --prune-cache --embedding-cache-ttl-days 30
-  --embedding-cache-max-bytes 500000000` (добавьте `--prune-cache-dry-run` для
-  проверки). Лимиты также включают автоочистку перед прогоном; последняя запись
-  не удаляется, даже если она больше лимита.
-- Для CI и офлайн-проверок используйте `--embedding-provider hash`.
+- By default: `%LOCALAPPDATA%\TextChunker\embeddings\<model>-<hash>\<sha256>.bin`.
+- The scope includes the endpoint, model name and dimension: two models with
+  the same name on different servers do not reuse each other's vectors.
+- `--embedding-cache-dir` overrides the directory; `--no-embedding-cache`
+  disables the cache.
+- The key includes the model, prompt and the atom's text; changing the
+  model/prompt produces misses.
+- Corrupted or dimension-mismatched entries are removed and recomputed.
+- Maintenance: `textchunker --prune-cache --embedding-cache-ttl-days 30
+  --embedding-cache-max-bytes 500000000` (add `--prune-cache-dry-run` to
+  check). The limits also enable auto-cleanup before the run; the last
+  entry is not deleted even if it exceeds the limit.
+- For CI and offline checks use `--embedding-provider hash`.
 
-## Документ больше лимита semantic (exit 2 / 413)
+## Document larger than the semantic limit (exit 2 / 413)
 
-Semantic работает в document-mode: весь текст буферизуется до
-`--semantic-max-bytes` (по умолчанию 20 МБ).
+Semantic chunking works in document-mode: all text is buffered up to
+`--semantic-max-bytes` (default 20 MB).
 
-- `--semantic-fallback recursive` (по умолчанию) — предупреждение в stderr,
-  нарезка `recursive`, в метаданных `semanticFallback: "recursive"`.
-- `--semantic-fallback error` — exit 2, API 413; чанки не выводятся.
-- `--semantic-fallback streaming` — окна по `--semantic-stream-window-bytes`
-  (4 МБ) с перекрытием; память ограничена окном, `--semantic-max-bytes`
-  не ограничивает размер файла. На стыках окон возможны менее точные границы.
-- Для очень больших файлов streaming обычно лучше `recursive`; для маленьких
-  оставьте document-mode.
+- `--semantic-fallback recursive` (default) — warning to stderr, chunking with
+  `recursive`, `semanticFallback: "recursive"` in metadata.
+- `--semantic-fallback error` — exit 2, API 413; no chunks are emitted.
+- `--semantic-fallback streaming` — windows of
+  `--semantic-stream-window-bytes` (4 MB) with overlap; memory is bounded by
+  the window, `--semantic-max-bytes` does not limit file size. At window
+  borders boundaries may be less accurate.
+- For very large files streaming is usually worse than `recursive`; for small
+  documents keep document-mode.
 
-## 429, таймауты и повторы
+## 429, timeouts and retries
 
-- Сетевые ошибки, `429 Too Many Requests` и `5xx` повторяются с экспоненциальной
-  задержкой (200 мс → 5 с), число повторов — `--embedding-max-retries` (по умолчанию 3).
-- `--embedding-timeout` (секунды, по умолчанию 120) ограничивает один HTTP-запрос;
-  после исчерпания повторов CLI завершается с кодом 5, API отвечает 503.
-- `llama.cpp` обычно не отдаёт 429 (запросы встают в очередь слотов), но 429 бывает
-  за reverse-proxy/rate-limiter. Для параллельных батчей поднимайте сервер с
-  `--parallel N` и ставьте `--embedding-concurrency` не больше N.
-- При `--embedding-concurrency > 1` порядок результатов сохраняется; одинаковые
-  тексты дедуплицируются.
-- Если сервер возвращает ошибку контекста на большом батче, уменьшите
-  `--embedding-max-batch-chars` (например, до 4000) или `--embedding-batch-size`.
-  Ошибку `input ... too large to process` провайдер дробит автоматически
-  (батч → текст → усреднение векторов); если не помогает, увеличьте `-b` сервера.
+- Network errors, `429 Too Many Requests` and 5xx are retried with
+  exponential backoff (200 ms → 5 s); retry count —
+  `--embedding-max-retries` (default 3).
+- `--embedding-timeout` (seconds, default 120) bounds one HTTP request;
+  after retries are exhausted the CLI exits with code 5, the API responds 503.
+- `llama.cpp` normally does not return 429 (requests queue up in slots), but
+  429 can appear behind a reverse-proxy/rate-limiter. For parallel batches
+  start the server with `--parallel N` and set
+  `--embedding-concurrency` no higher than N.
+- With `--embedding-concurrency > 1` the order of results is preserved;
+  identical texts are deduplicated.
+- If the server returns a context error for a large batch, decrease
+  `--embedding-max-batch-chars` (e.g., to 4000) or `--embedding-batch-size`.
+  An `input ... too large to process` error is split by the provider
+  automatically (batch → text → averaging of partial vectors); if it does not
+  help, increase the server's `-b`.
 
-## Не открывается `/scalar`
+## `/scalar` is not available
 
-- По умолчанию документация включена; если задан `ApiDocs__Enabled=false`, `/scalar`
-  и `/openapi/v1.json` отвечают 404 — это штатно.
-- Маршрут UI настраивается `ApiDocs__Route` (по умолчанию `/scalar`), документ —
-  `ApiDocs__OpenApiRoute` (обязателен `{documentName}`).
-- Проверьте сам документ: `curl http://localhost:5080/openapi/v1.json`.
-- Scalar-ассеты отдаются локально; CDN и интернет не нужны. Если UI пустой,
-  посмотрите консоль браузера: обычно причина — неверный `OpenApiRoute` или
-  reverse-proxy, обрезающий путь.
-- Корень `/` перенаправляет на UI; при отключённой документации корень не маппится.
+- Documentation is enabled by default; if `ApiDocs__Enabled=false` is set,
+  `/scalar` and `/openapi/v1.json` respond with 404 — this is expected.
+- UI route is configured by `ApiDocs__Route` (default `/scalar`), document —
+  by `ApiDocs__OpenApiRoute` (must contain `{documentName}`).
+- Check the document itself:
+  `curl http://localhost:5080/openapi/v1.json`.
+- Scalar assets are served locally; no CDN or internet needed. If the UI is
+  empty, check the browser console: usually the cause is a wrong
+  `OpenApiRoute` or a reverse-proxy trimming the path.
+- The root `/` redirects to the UI; with documentation disabled the root is
+  not mapped.
 
-## Коды завершения
+## Exit codes
 
-| Код | Значение |
+| Code | Meaning |
 |---|---|
-| 0 | Успех |
-| 1 | Общая ошибка / stdin не переопределён |
-| 2 | Невалидные аргументы (включая лимит semantic при `fallback=error`) |
-| 3 | Файл не найден |
-| 4 | Ошибка чтения / невалидная кодировка |
-| 5 | Ошибка токенизатора **или провайдера эмбеддингов** |
-| 6 | Ошибка записи |
+| 0 | Success |
+| 1 | General error / stdin not redirected |
+| 2 | Invalid arguments (including the semantic limit with `fallback=error`) |
+| 3 | File not found |
+| 4 | Read error / invalid encoding |
+| 5 | Tokenizer loading error **or embedding provider error** |
+| 6 | Write error |
 
-## Полезные команды
+## Useful commands
 
 ```bash
 textchunker --help
 textchunker --version
-textchunker --input doc.txt --stats        # статистика в stderr
+textchunker --input doc.txt --stats        # stats to stderr
 ```

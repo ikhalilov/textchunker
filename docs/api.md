@@ -1,52 +1,54 @@
 # HTTP API (Minimal APIs)
 
-Проект `src/TextChunker.Api` на ASP.NET Core Minimal APIs (net10.0). Использует тот же
-движок нарезки (`ChunkingService`, стратегии, токенизаторы), что и CLI.
+The `src/TextChunker.Api` project uses ASP.NET Core Minimal APIs (net10.0).
+It uses the same chunking engine (`ChunkingService`, strategies, tokenizers)
+as the CLI.
 
-## Запуск
+## Running
 
 ```bash
 dotnet run --project src/TextChunker.Api --urls http://localhost:5080
 ```
 
-Публикация и запуск:
+Publishing and running:
 
 ```bash
 dotnet publish src/TextChunker.Api -c Release -o out/api
 ./out/api/TextChunker.Api --urls http://0.0.0.0:5080
 ```
 
-Конфигурация (`appsettings.json` / переменные окружения):
+Configuration (`appsettings.json` / environment variables):
 
-| Ключ | По умолчанию | Назначение |
+| Key | Default | Purpose |
 |---|---|---|
-| `Chunking:MaxTextChars` | `5 000 000` | максимальная длина `text` (иначе 413) |
-| `Chunking:TokenizerCacheDir` | путь по умолчанию | каталог кэша `tokenizer.json` |
-| `ApiDocs:Enabled` | `true` | публиковать OpenAPI/Scalar |
-| `ApiDocs:Route` | `/scalar` | маршрут Scalar UI |
-| `ApiDocs:OpenApiRoute` | `/openapi/{documentName}.json` | маршрут OpenAPI (обязателен `{documentName}`) |
-| `ApiDocs:Title` | `TextChunker API` | заголовок документации |
-| Kestrel `MaxRequestBodySize` | 20 МБ | ограничение тела запроса |
+| `Chunking:MaxTextChars` | `5 000 000` | maximum `text` length (otherwise 413) |
+| `Chunking:TokenizerCacheDir` | default path | cache directory for `tokenizer.json` |
+| `ApiDocs:Enabled` | `true` | publish OpenAPI/Scalar |
+| `ApiDocs:Route` | `/scalar` | Scalar UI route |
+| `ApiDocs:OpenApiRoute` | `/openapi/{documentName}.json` | OpenAPI route (`{documentName}` is required) |
+| `ApiDocs:Title` | `TextChunker API` | documentation title |
+| Kestrel `MaxRequestBodySize` | 20 MB | request body size limit |
 
-## Версионирование
+## Versioning
 
-Актуальная версия API — `/api/v1`. Все клиенты должны использовать маршруты с префиксом версии.
+The current API version — `/api/v1`. All clients should use routes with the
+version prefix.
 
-## Роуты
+## Routes
 
-| Метод | Путь | Назначение |
+| Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/v1/health` | `{status, version}` |
 | GET | `/api/v1/tokenizers` | `{names, defaultModel}` |
 | GET | `/api/v1/strategies` | `{names}` — `fixed`, `recursive`, `paragraph`, `semantic` |
-| GET | `/` | редирект на `/scalar` |
+| GET | `/` | redirect to `/scalar` |
 | GET | `/scalar` | Scalar UI (OpenAPI reference) |
-| GET | `/openapi/v1.json` | OpenAPI 3.0 документ |
-| POST | `/api/v1/chunk` | нарезка: JSON `{chunks, stats}` |
-| POST | `/api/v1/chunk/stream` | NDJSON: по одному чанку на строку |
-| POST | `/api/v1/chunk/file` | загрузка `.txt`/`.md`/`.markdown` (multipart) |
+| GET | `/openapi/v1.json` | OpenAPI 3.0 document |
+| POST | `/api/v1/chunk` | chunking: JSON `{chunks, stats}` |
+| POST | `/api/v1/chunk/stream` | NDJSON: one chunk per line |
+| POST | `/api/v1/chunk/file` | upload of `.txt`/`.md`/`.markdown` (multipart) |
 
-### Быстрые примеры
+### Quick examples
 
 ```bash
 # GET /api/v1/health
@@ -81,12 +83,12 @@ curl http://localhost:5080/scalar
 # GET /openapi/v1.json
 curl http://localhost:5080/openapi/v1.json
 
-# GET / (редирект на /scalar)
+# GET / (redirect to /scalar)
 curl -I http://localhost:5080/
 ```
 
-Для `strategy=semantic` добавьте заголовок `X-API-Key`, если на сервере задан
-`TEXTCHUNKER_EMBEDDING_API_KEY`:
+For `strategy=semantic` add the `X-API-Key` header if `TEXTCHUNKER_EMBEDDING_API_KEY`
+is set on the server:
 
 ```bash
 curl -X POST http://localhost:5080/api/v1/chunk \
@@ -95,20 +97,23 @@ curl -X POST http://localhost:5080/api/v1/chunk \
   -d '{"text":"…","strategy":"semantic","tokenizer":"huggingface","maxTokens":512}'
 ```
 
-## Интерактивная документация (Scalar)
+## Interactive Documentation (Scalar)
 
-- UI: `/scalar` (корень `/` перенаправляет на `/scalar`).
+- UI: `/scalar` (root `/` redirects to `/scalar`).
 - OpenAPI 3.0: `/openapi/v1.json` (Swashbuckle).
-- UI: [Scalar](https://scalar.com/); ассеты отдаются локально, без CDN.
-- В документе есть теги «Справочники»/«Нарезка», summary, описания схем из XML-комментариев,
-  `problem+json` для 400/401/413/415/503 и NDJSON для `/api/v1/chunk/stream`.
-- OpenAPI включает версионированные маршруты `/api/v1/...`.
-- Отключение: `ApiDocs__Enabled=false` (роуты документации → 404, API работает).
-- При обратном прокси с префиксом задайте `ApiDocs__Route` и `ApiDocs__OpenApiRoute`
-  согласованно; `OpenApiRoute` должен содержать `{documentName}`.
+- UI: [Scalar](https://scalar.com/); assets are served locally, no CDN.
+- The document is grouped under the OpenAPI tags `Справочники` and `Нарезка`,
+  with summaries and schema descriptions taken from XML comments,
+  `problem+json` for 400/401/413/415/503, and NDJSON for `/api/v1/chunk/stream`.
+- OpenAPI includes versioned routes under `/api/v1/...`.
+- Disabling: `ApiDocs__Enabled=false` (documentation routes → 404, the API
+  works).
+- Behind a reverse proxy with a prefix, set `ApiDocs__Route` and
+  `ApiDocs__OpenApiRoute` consistently; `OpenApiRoute` must contain
+  `{documentName}`.
 
 ```bash
-# посмотреть документ
+# see the document
 curl http://localhost:5080/openapi/v1.json
 
 # UI
@@ -137,15 +142,16 @@ start http://localhost:5080/scalar
 }
 ```
 
-- Все поля, кроме `text`, опциональны.
-- Если ни один `max-*` не задан → `maxTokens = 512`; стратегия по умолчанию `recursive`,
-  токенизатор `word`.
-- `source` (по умолчанию `api`) задаёт top-level `source` и префикс `id` (`{source}:{seq:D6}`).
-- `metadata` проходит в `metadata` каждого чанка.
-- Для `huggingface` `tokenizerPath` (локальный `tokenizer.json`) приоритетнее
-  `tokenizerModel`; `tokenizerCacheDir` переопределяет серверный.
+- All fields except `text` are optional.
+- If no `max-*` is set → `maxTokens = 512`; default strategy is
+  `recursive`, tokenizer `word`.
+- `source` (default `api`) sets the top-level `source` and the `id` prefix
+  (`{source}:{seq:D6}`).
+- `metadata` is passed to the `metadata` of each chunk.
+- For `huggingface`, `tokenizerPath` (local `tokenizer.json`) takes precedence
+  over `tokenizerModel`; `tokenizerCacheDir` overrides the server's.
 
-Ответ:
+Response:
 
 ```json
 {
@@ -175,16 +181,16 @@ start http://localhost:5080/scalar
 }
 ```
 
-Для `strategy: "semantic"` в `stats` добавляются `semanticAtomCount`,
-`embeddingCacheHits` и `embeddingCacheMisses`; `elapsedMs` включает построение
-семантического плана (эмбеддинги).
+For `strategy: "semantic"`, `stats` also includes `semanticAtomCount`,
+`embeddingCacheHits`, `embeddingCacheMisses`; `elapsedMs` includes building
+the semantic plan (embeddings).
 
 ### `POST /api/v1/chunk/stream`
 
-Тот же запрос; ответ `200 application/x-ndjson`, каждая строка — JSON-чанк
-(формат как у элементов `chunks[]`), разделитель `\n`. Выдача потоковая:
-bounded-канал (backpressure), память ограничена окном нарезки; отключение клиента
-останавливает обработку.
+The same request; the response is `200 application/x-ndjson`, each line is
+a JSON chunk (format like `chunks[]` items), `\n` separated. Delivery is
+streaming: bounded channel (backpressure), memory is bounded by the chunking
+window; client disconnect stops the processing.
 
 ```bash
 curl -N -X POST http://localhost:5080/api/v1/chunk/stream \
@@ -194,8 +200,9 @@ curl -N -X POST http://localhost:5080/api/v1/chunk/stream \
 
 ### `POST /api/v1/chunk/file`
 
-Загрузка файла `.txt`, `.md` или `.markdown` как `multipart/form-data`. Часть с файлом —
-`file`; опции — обычные form-поля (те же, что у `/api/v1/chunk`, плюс `encoding`/`invalidEncoding`).
+Upload a file `.txt`, `.md`, or `.markdown` as `multipart/form-data`. The
+part with the file is `file`; options are regular form fields (the same as
+`/api/v1/chunk`, plus `encoding`/`invalidEncoding`).
 
 ```bash
 curl -X POST http://localhost:5080/api/v1/chunk/file \
@@ -213,22 +220,26 @@ curl -X POST http://localhost:5080/api/v1/chunk/file \
   -F "encoding=utf-8"
 ```
 
-- Расширения: `.txt`, `.md`, `.markdown` (регистр не важен); иначе **415**.
-- Кодировка по умолчанию UTF-8, BOM снимается; `encoding=windows-1251` и другие кодовые
-  страницы; `invalidEncoding=replace|error` (по умолчанию `replace`; `error` → 400).
-- `separators` и `metadata` передаются JSON-строками:
+- Extensions: `.txt`, `.md`, `.markdown` (case-insensitive); otherwise
+  **415**.
+- Encoding is UTF-8 by default, BOM is stripped; `encoding=windows-1251` and
+  other code pages; `invalidEncoding=replace|error` (default `replace`;
+  `error` → 400).
+- `separators` and `metadata` are passed as JSON strings:
   `-F 'separators=["\n\n","\n"]'`, `-F 'metadata={"lang":"ru"}'`.
-- Для `semantic` доступны плоские поля (`embeddingProvider`, `embeddingDimensions`,
-  `embeddingMaxBatchChars`, `embeddingConcurrency`, `embeddingTimeoutSeconds`,
-  `embeddingMaxRetries`, `semanticPercentile`,
+- For `semantic`, flat fields (`embeddingProvider`,
+  `embeddingDimensions`, `embeddingMaxBatchChars`, `embeddingConcurrency`,
+  `embeddingTimeoutSeconds`, `embeddingMaxRetries`, `semanticPercentile`,
   `semanticWindow`, `semanticMaxBytes`, `semanticStreamWindowBytes`,
-  `semanticStreamOverlapBytes`, `semanticFallback`, …) или JSON-строки
-  `embedding` / `semantic`. Плоские поля переопределяют JSON.
-- Пустой файл → **400**; текст длиннее `Chunking:MaxTextChars` или тело > 20 МБ → **413**.
-- Ответ — тот же `{chunks, stats}`, что и у `/api/v1/chunk`.
-- Markdown не парсится — режется как обычный текст (сохраняются все разделители).
+  `semanticStreamOverlapBytes`, `semanticFallback`, …) or JSON strings
+  `embedding` / `semantic` are available. Flat fields override JSON.
+- Empty file → **400**; `text` longer than `Chunking:MaxTextChars` or body
+  > 20 MB → **413**.
+- Response — the same `{chunks, stats}` as `/api/v1/chunk`.
+- Markdown is not parsed — it is chunked as plain text (all delimiters are
+  preserved).
 
-### Семантическая стратегия в API
+### Semantic Strategy in the API
 
 ```json
 {
@@ -259,25 +270,26 @@ curl -X POST http://localhost:5080/api/v1/chunk/file \
 }
 ```
 
-- `fallback: "streaming"` включает оконную обработку: документ читается окнами
-  по `streamWindowBytes` с перекрытием `streamOverlapBytes`, `maxBytes` при этом
-  не ограничивает размер файла.
+- `fallback: "streaming"` enables windowed processing: the document is read
+  in windows of `streamWindowBytes` with an overlap of
+  `streamOverlapBytes`, `maxBytes` then does not limit the file size.
 
-- Ключ доступа к серверу эмбеддингов (`TEXTCHUNKER_EMBEDDING_API_KEY`) **не принимается**
-  в теле — он задаётся только на сервере.
-- Недоступный провайдер → **503**; документ больше `maxBytes` при `fallback=error` → **413**;
-  неизвестный провайдер/невалидные параметры → **400**.
-- Метаданные чанков содержат `semanticProvider`, `semanticModel`, `breakpointPercentile`
-  и (при откате) `semanticFallback`. Подробно — [semantic-chunking.md](semantic-chunking.md).
+- The embedding server key (`TEXTCHUNKER_EMBEDDING_API_KEY`) is **not**
+  accepted in the body — it is set only on the server.
+- Unavailable provider → **503**; document larger than `maxBytes` with
+  `fallback=error` → **413**; unknown provider/invalid parameters → **400**.
+- Chunk metadata include `semanticProvider`, `semanticModel`,
+  `breakpointPercentile`, and (on fallback) `semanticFallback`. Details —
+  [semantic-chunking.md](semantic-chunking.md).
 
-### Аутентификация semantic-запросов
+### Authentication of Semantic Requests
 
-Если на сервере задана переменная окружения `TEXTCHUNKER_EMBEDDING_API_KEY`, то для запросов
-`POST /api/v1/chunk`, `POST /api/v1/chunk/file` и `POST /api/v1/chunk/stream` со
-`strategy: "semantic"` требуется заголовок:
+If the environment variable `TEXTCHUNKER_EMBEDDING_API_KEY` is set on the
+server, requests to `POST /api/v1/chunk`, `POST /api/v1/chunk/file` and
+`POST /api/v1/chunk/stream` with `strategy: "semantic"` require the header:
 
 ```http
-X-API-Key: <значение TEXTCHUNKER_EMBEDDING_API_KEY>
+X-API-Key: <TEXTCHUNKER_EMBEDDING_API_KEY value>
 ```
 
 ```bash
@@ -287,45 +299,48 @@ curl -X POST http://localhost:5080/api/v1/chunk \
   -d '{"text":"…","strategy":"semantic","tokenizer":"huggingface","maxTokens":512}'
 ```
 
-При отсутствии или неверном значении возвращается **401** `application/problem+json`.
-Если переменная не задана, проверка отключается.
+Missing or wrong value → **401** `application/problem+json`. If the variable
+is not set, the check is disabled.
 
-### Ошибки
+### Errors
 
-Формат — `application/problem+json` (RFC 7807):
+Format — `application/problem+json` (RFC 7807):
 
-| Код | Причина |
+| Code | Cause |
 |---|---|
-| 400 | нет/пустой `text`, неизвестная стратегия/токенизатор, невалидные параметры, невалидный JSON |
-| 401 | для `semantic` на `/api/v1/*` не передан или неверен `X-API-Key` (если задан `TEXTCHUNKER_EMBEDDING_API_KEY`) |
-| 413 | `text` длиннее `Chunking:MaxTextChars` или тело больше лимита Kestrel |
-| 415 | неподдерживаемое расширение файла (не `.txt`/`.md`/`.markdown`) или запрос не multipart |
-| 503 | не удалось загрузить токенизатор (плохой `tokenizerPath`, сеть/парсинг) |
-| 500 | непредвиденная ошибка |
-| 499 | клиент отключился |
+| 400 | missing/empty `text`, unknown strategy/tokenizer, invalid parameters, invalid JSON |
+| 401 | for `semantic` under `/api/v1/*`, `X-API-Key` is missing or wrong (when `TEXTCHUNKER_EMBEDDING_API_KEY` is set) |
+| 413 | `text` longer than `Chunking:MaxTextChars`, or body exceeds the Kestrel limit |
+| 415 | unsupported file extension (not `.txt`/`.md`/`.markdown`) or non-multipart request |
+| 503 | tokenizer loading or embedding provider failure (bad `tokenizerPath`, network/parsing, embedding server unreachable) |
+| 500 | unexpected error |
+| 499 | client disconnected |
 
-Пример:
+Example:
 
 ```json
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "Invalid request",
   "status": 400,
-  "detail": "Неизвестная стратегия 'bogus'. Допустимые значения: fixed, recursive, paragraph. …"
+  "detail": "Unknown strategy 'bogus'. Allowed values: fixed, recursive, paragraph. …"
 }
 ```
 
-## Токенизаторы и кэш
+## Tokenizers and Cache
 
-- Те же реализации, что в CLI; для `huggingface` — точный `tokenCount` (включая prefix).
-- Успешно загруженный токенизатор кэшируется на время жизни процесса
-  (`TokenizerCache`, singleton); повторные запросы не перезагружают модель.
-- HF-модель скачивается при первом использовании в `tokenizerCacheDir` или
+- The same implementations as in the CLI; for `huggingface` — exact
+  `tokenCount` (including the prefix).
+- A successfully loaded tokenizer is cached for the process lifetime
+  (`TokenizerCache`, singleton); repeated requests do not reload the model.
+- The HF model is downloaded on first use into `tokenizerCacheDir` or
   `%LOCALAPPDATA%\TextChunker\tokenizers`.
 
-## Ограничения MVP
+## MVP Limitations
 
-- Аутентификация ограничена опциональным `X-API-Key` для semantic-запросов на `/api/v1/*`.
-- Нет персистентности и фоновых задач.
-- OpenAPI/Scalar подключён; документ доступен по `/openapi/v1.json`.
-- Текст запроса не логируется.
+- Authentication is limited to an optional `X-API-Key` for semantic requests
+  under `/api/v1/*`.
+- No persistence or background tasks.
+- OpenAPI/Scalar is connected; the document is available at
+  `/openapi/v1.json`.
+- Request text is not logged.

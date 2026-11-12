@@ -1,54 +1,58 @@
-# Семантическая нарезка
+# Semantic Chunking
 
-Стратегия `--strategy semantic` режет текст по смысловым границам, а не только по
-пунктуации: соседние предложения сравниваются эмбеддингами, и чанк заканчивается там,
-где меняется тема.
+The `--strategy semantic` strategy splits text at semantic boundaries rather
+than only at punctuation: neighboring sentences are compared with embeddings,
+and a chunk ends where the topic changes.
 
-## Как это работает
+## How It Works
 
 ```
-текст ──► SemanticAtomizer ──► атомы (предложения, абзацы, заголовки, код, списки)
-                                        │
-                                        ▼
-                          эмбеддинги (llama.cpp / hash) + кэш
-                                        │
-                                        ▼
-                    d[i] = 1 − cos (опционально окно TextTiling)
-                                        │
-                     breakpoints = percentile(d, p) ∧ d ≥ minDistance
-                                        │
-                                        ▼
-                     SemanticChunker: группировка + лимиты + overlap
+text ──► SemanticAtomizer ──► atoms (sentences, paragraphs, headings, code, lists)
+                                         │
+                                         ▼
+                           embeddings (llama.cpp / hash) + cache
+                                         │
+                                         ▼
+                     d[i] = 1 − cos (optional TextTiling window)
+                                         │
+                      breakpoints = percentile(d, p) ∧ d ≥ minDistance
+                                         │
+                      SemanticChunker: grouping + limits + overlap
 ```
 
-1. **Атомизация.** Markdown-заголовки, элементы списков и блоки кода становятся
-   отдельными атомами (код не режется вовсе). Остальной текст делится на предложения
-   с защитой от сокращений (`т. д.`, `см.`, `стр.`, `Mr.`, инициалы) и десятичных дробей.
-   Слишком длинные атомы (> `--semantic-max-atom-tokens`) дробятся заранее; короткие
-   склеиваются с соседями, причём короткий подзаголовок в начале абзаца тянет за собой
-   следующее предложение, а не приклеивается к предыдущей теме.
-2. **Эмбеддинги.** Атомы отправляются на сервер батчами; одинаковые тексты
-   дедуплицируются, результат кэшируется на диске.
-3. **Границы.** Расстояние между соседними атомами — `1 − cosine`. Граница ставится там,
-   где расстояние не ниже перцентиля `p` и не меньше `minDistance`. При `--semantic-window N`
-   сравниваются средние векторы левого и правого окон (TextTiling), это устойчивее к шуму.
-   Markdown-заголовки всегда начинают новый чанк — это структурная граница, не зависящая
-   от эмбеддингов (короткий заголовок может быть близок к соседнему тексту).
-4. **Группировка.** Атомы накапливаются до семантической границы или до лимита
-   (`--max-tokens` / `--max-chars` / …, с учётом `--prefix`). Если атом сам не влезает —
-   жёсткий рез, выровненный на пробел, чтобы не рвать слова. Перекрытие собирается
-   целыми атомами.
-5. **Streaming для больших файлов.** При `--semantic-fallback streaming` документ
-   читается окнами по `--semantic-stream-window-bytes` с перекрытием
-   `--semantic-stream-overlap-bytes`: каждое окно планируется отдельно, а чанк,
-   начинающийся в перекрытии, обрезается по границе предыдущего окна. Память
-   ограничена окном, а не размером файла. `--min-*`/`--drop-small` в streaming
-   не применяются, чтобы не терять текст на стыках окон.
+1. **Atomization.** Markdown headings, list items and code blocks become
+   separate atoms (code is never split). The remaining text is split into
+   sentences with protection for abbreviations (`т. д.`, `см.`, `стр.`,
+   `Mr.`, initials) and decimal fractions. Atoms that are too long
+   (> `--semantic-max-atom-tokens`) are split in advance; short ones are
+   merged with their neighbors, with a short sub-heading at the start of a
+   paragraph pulling the following sentence with it rather than being glued
+   to the previous topic.
+2. **Embeddings.** Atoms are sent to the server in batches; identical texts
+   are deduplicated and the results are cached on disk.
+3. **Boundaries.** The distance between neighboring atoms is `1 − cosine`.
+   A boundary is set where the distance is at least the percentile `p` and
+   not below `minDistance`. With `--semantic-window N`, the mean vectors of
+   the left and right windows are compared (TextTiling), which is more robust
+   to noise. Markdown headings always start a new chunk — this is a structural
+   boundary, independent of embeddings (a short heading may be close to
+   neighboring text).
+4. **Grouping.** Atoms accumulate up to a semantic boundary or up to the
+   limit (`--max-tokens` / `--max-chars` / …, taking `--prefix` into account).
+   If an atom does not fit on its own — a hard cut, aligned on whitespace, so
+   that words are not split. Overlap is accumulated from whole atoms.
+5. **Streaming for large files.** With `--semantic-fallback streaming`, the
+   document is read in windows of `--semantic-stream-window-bytes` with an
+   overlap of `--semantic-stream-overlap-bytes`: each window is planned
+   separately, and a chunk that starts inside the overlap is cut off at the
+   previous window's boundary. Memory is bounded by the window, not by the
+   file size. `--min-*`/`--drop-small` are not applied in streaming mode,
+   so that text is not lost at window borders.
 
-## Запуск сервера эмбеддингов
+## Starting the Embedding Server
 
-Приложение само сервер не запускает — только обращается к нему по HTTP.
-Проверенный вариант с `llama.cpp` и `embeddinggemma-2`:
+The application does not start the server itself — it only calls it over HTTP.
+A verified option with `llama.cpp` and `embeddinggemma-2`:
 
 ```bat
 D:\opt\llama\llama-server.exe ^
@@ -59,14 +63,18 @@ D:\opt\llama\llama-server.exe ^
   -ngl 99 --host 127.0.0.1 --port 9932 --no-webui
 ```
 
-- `--embedding` обязателен; `--pooling mean` и `--embd-normalize 2` соответствуют модели
-  (`1_Pooling/config.json` → mean, `2_Normalize`).
-- `-a embeddinggemma-2` даёт чистый id для `/v1/models` и поля `model`.
-- `--parallel N` задаёт число слотов; для `--embedding-concurrency N` берите не больше N.
-- `--mmproj` нужен только для изображений; для текста он лишний и ест память.
-- Параметры сэмплинга (`--temperature`, `--top-p`, …) на эмбеддинги не влияют.
+- `--embedding` is required; `--pooling mean` and `--embd-normalize 2`
+  match the model (`1_Pooling/config.json` → mean, `2_Normalize`).
+- `-a embeddinggemma-2` gives a clean id for `/v1/models` and the `model`
+  field.
+- `--parallel N` sets the number of slots; take `--embedding-concurrency N`
+  no higher than N.
+- `--mmproj` is only needed for images; for text it is unnecessary and
+  eats memory.
+- Sampling parameters (`--temperature`, `--top-p`, …) do not affect
+  embeddings.
 
-Проверка:
+Verification:
 
 ```bash
 curl http://127.0.0.1:9932/health
@@ -75,13 +83,14 @@ curl http://127.0.0.1:9932/v1/embeddings \
   -d '{"model":"embeddinggemma-2","input":["привет мир"]}'
 ```
 
-Ожидается 768-мерный L2-нормированный вектор. Первый запрос после простоя может
-занять до ~10 с (прогрев CUDA); последующие — десятки миллисекунд.
+A 768-dimensional L2-normalized vector is expected. The first request after a
+restart may take up to ~10 s (CUDA warmup); subsequent ones take tens of
+milliseconds.
 
-## Использование
+## Usage
 
 ```bash
-# локальный llama.cpp + точный счёт токенов модели
+# local llama.cpp + exact token counting
 textchunker --input document.md \
   --strategy semantic \
   --embedding-provider llama-cpp \
@@ -93,136 +102,146 @@ textchunker --input document.md \
   --stats
 ```
 
-Офлайн-режим без модели (детерминированный hashing-трик, для проверки конвейера и тестов):
+Offline mode without a model (deterministic hashing trick, for pipeline
+checks and tests):
 
 ```bash
 textchunker --input document.md --strategy semantic \
   --embedding-provider hash --no-embedding-cache --max-tokens 512
 ```
 
-## Параметры
+## Parameters
 
-| Опция | По умолчанию | Назначение |
+| Option | Default | Purpose |
 |---|---|---|
 | `--embedding-provider` | `llama-cpp` | `llama-cpp` \| `hash` |
-| `--embedding-endpoint` | `http://127.0.0.1:9932` | базовый URL сервера |
-| `--embedding-model` | — | значение поля `model` в запросе |
-| `--embedding-batch-size` | `32` | атомов на один HTTP-запрос |
-| `--embedding-max-batch-chars` | `8000` | символьный бюджет батча (консервативная оценка токенов; `0` — без ограничения) |
-| `--embedding-dimensions` | `768` | ожидаемая размерность векторов (`0` — не проверять) |
-| `--embedding-concurrency` | `1` | параллельных батчей (сервер должен иметь `--parallel N`) |
-| `--embedding-timeout` | `120` | таймаут HTTP-запроса, секунды |
-| `--embedding-max-retries` | `3` | повторы на сеть, 429 и 5xx |
-| `--embedding-prompt` | — | префикс к каждому атому (входит в ключ кэша) |
-| `--embedding-cache-dir` | `%LOCALAPPDATA%\TextChunker\embeddings` | каталог кэша |
-| `--embedding-cache-max-bytes` | — | лимит размера кэша (автоочистка перед прогоном) |
-| `--embedding-cache-ttl-days` | — | удалять записи старше N дней (автоочистка) |
-| `--no-embedding-cache` | — | отключить кэш |
-| `--semantic-percentile` | `0.90` | перцентиль расстояний для границ |
-| `--semantic-min-distance` | `0.02` | минимальная дистанция границы |
-| `--semantic-window` | `1` | окно TextTiling (`1` — соседние атомы) |
-| `--semantic-max-bytes` | `20000000` | лимит входа для `recursive`/`error` (20 МБ) |
-| `--semantic-fallback` | `recursive` | `recursive` — откат, `error` — ошибка, `streaming` — окна |
-| `--semantic-stream-window-bytes` | `4000000` | размер окна streaming-режима, байт |
-| `--semantic-stream-overlap-bytes` | `256000` | перекрытие соседних окон, байт |
-| `--semantic-min-atom-chars` | `20` | склейка коротких атомов |
-| `--semantic-max-atom-tokens` | `512` | предварительное дробление длинных атомов |
+| `--embedding-endpoint` | `http://127.0.0.1:9932` | base URL of the server |
+| `--embedding-model` | — | value of the `model` field in the request |
+| `--embedding-batch-size` | `32` | atoms per single HTTP request |
+| `--embedding-max-batch-chars` | `8000` | character budget of a batch (conservative token estimate; `0` — no limit) |
+| `--embedding-dimensions` | `768` | expected vector dimension (`0` — do not check) |
+| `--embedding-concurrency` | `1` | parallel batches (the server must have `--parallel N`) |
+| `--embedding-timeout` | `120` | HTTP request timeout, seconds |
+| `--embedding-max-retries` | `3` | retries for network, 429 and 5xx |
+| `--embedding-prompt` | — | prefix appended to each atom (part of the cache key) |
+| `--embedding-cache-dir` | `%LOCALAPPDATA%\TextChunker\embeddings` | cache directory |
+| `--embedding-cache-max-bytes` | — | cache size limit (pre-run auto-cleanup) |
+| `--embedding-cache-ttl-days` | — | delete entries older than N days (pre-run auto-cleanup) |
+| `--no-embedding-cache` | — | disable the cache |
+| `--semantic-percentile` | `0.90` | percentile of distances for boundaries |
+| `--semantic-min-distance` | `0.02` | minimum boundary distance |
+| `--semantic-window` | `1` | TextTiling window (`1` — neighboring atoms) |
+| `--semantic-max-bytes` | `20000000` | input limit for `recursive`/`error` (20 MB) |
+| `--semantic-fallback` | `recursive` | `recursive` — fallback, `error` — error, `streaming` — windows |
+| `--semantic-stream-window-bytes` | `4000000` | size of a streaming-mode window, bytes |
+| `--semantic-stream-overlap-bytes` | `256000` | overlap between neighboring windows |
+| `--semantic-min-atom-chars` | `20` | merging of short atoms |
+| `--semantic-max-atom-tokens` | `512` | pre-splitting of long atoms |
 
-API-ключ (если сервер закрыт `--api-key`) читается **только** из переменной окружения
-`TEXTCHUNKER_EMBEDDING_API_KEY` и отправляется как `Authorization: Bearer`.
+The API key (if the server is locked behind `--api-key`) is read **only** from
+the environment variable `TEXTCHUNKER_EMBEDDING_API_KEY` and is sent as
+`Authorization: Bearer`.
 
-## Тюнинг качества
+## Quality Tuning
 
-- **Мало границ** → уменьшите `--semantic-percentile` (например, 0.8).
-- **Слишком много границ** → увеличьте перцентиль (0.95) и/или `--semantic-min-distance`.
-- **Абсолютные пороги не работают:** у embeddinggemma несвязанные тексты имеют cosine
-  0.65–0.72, связанные — 0.95+. Поэтому сравнение всегда относительное (перцентиль).
-- `--embedding-prompt "title: none | text: "` применяется ко всем атомам одинаково.
-  Для поиска границ это обычно не требуется; включайте, если эмбеддинги атомов
-  должны быть совместимы с retrieval-префиксом.
+- **Too few boundaries** → decrease `--semantic-percentile` (e.g. 0.8).
+- **Too many boundaries** → increase the percentile (0.95) and/or
+  `--semantic-min-distance`.
+- **Absolute thresholds do not work:** for embeddinggemma, unrelated texts
+  have cosine 0.65–0.72, related ones — 0.95+. Comparisons are always
+  relative (percentile).
+- `--embedding-prompt "title: none | text: "` is applied equally to all
+  atoms. Usually not needed for boundary detection; enable it if atom
+  embeddings must be compatible with a retrieval prefix.
 
-## Калибровка
+## Calibration
 
-Дефолты проверены на двух корпусах инструментом `tools/SemanticCalibration`;
-метрика — boundary F1 с допуском ±1–2 атома.
+Defaults are verified on two corpora with the `tools/SemanticCalibration`
+instrument; the metric is boundary F1 with a tolerance of ±1–2 atoms.
 
-| Набор | percentile | window | Precision | Recall | F1 |
+| Corpus | percentile | window | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
-| синтетика (10 док.) | 0.90 | 1 | 0.629 | 0.957 | 0.759 |
-| синтетика (10 док.) | 0.95 | 1 | 0.720 | 0.783 | 0.750 |
-| синтетика, проза (5) | 0.90 | 1 | 0.818 | 0.900 | 0.857 |
-| синтетика (10 док.) | 0.90 | 3 | 0.515 | 0.739 | 0.607 |
-| Википедия (39 док.) | 0.90 | 1 | 0.126 | 0.515 | 0.203 |
-| Википедия (39 док.) | 0.95 | 3 | 0.207 | 0.426 | 0.279 |
-| Википедия (39 док.) | 0.95 | 5 | 0.222 | 0.456 | 0.298 |
-| Википедия (39 док.) | 0.97 | 3 | 0.265 | 0.335 | 0.296 |
+| synthetic (10 docs) | 0.90 | 1 | 0.629 | 0.957 | 0.759 |
+| synthetic (10 docs) | 0.95 | 1 | 0.720 | 0.783 | 0.750 |
+| synthetic, prose (5) | 0.90 | 1 | 0.818 | 0.900 | 0.857 |
+| synthetic (10 docs) | 0.90 | 3 | 0.515 | 0.739 | 0.607 |
+| Wikipedia (39 docs) | 0.90 | 1 | 0.126 | 0.515 | 0.203 |
+| Wikipedia (39 docs) | 0.95 | 3 | 0.207 | 0.426 | 0.279 |
+| Wikipedia (39 docs) | 0.95 | 5 | 0.222 | 0.456 | 0.298 |
+| Wikipedia (39 docs) | 0.97 | 3 | 0.265 | 0.335 | 0.296 |
 
-- `--semantic-percentile 0.90` — лучший F1 на коротких/структурированных текстах;
-  0.95 точнее, но теряет recall.
-- `--semantic-window 1` лучше окна 3 на синтетике; на длинных статьях Википедии,
-  наоборот, помогают окна 3–5 и перцентиль 0.95–0.97.
-- Разделы Википедии — редакционная структура, а не всегда тематический сдвиг,
-  поэтому F1 там ниже. Дефолт `0.90/1` оставлен как компромисс; для своего домена
-  прогоните `tools/SemanticCalibration` и посмотрите `--verbose` / `--dump-atoms`
-  ([tests/calibration/README.md](../tests/calibration/README.md)).
+- `--semantic-percentile 0.90` gives the best F1 on short/structured texts;
+  0.95 is more precise but loses recall.
+- `--semantic-window 1` is better than window 3 on the synthetic corpus; for
+  long Wikipedia articles, windows 3–5 with a percentile of 0.95–0.97 work
+  better.
+- Wikipedia sections are editorial structure, not always a thematic shift,
+  so F1 is lower there. The `0.90/1` default is kept as a compromise; for
+  your own domain run `tools/SemanticCalibration` and look at `--verbose` /
+  `--dump-atoms` ([tests/calibration/README.md](../tests/calibration/README.md)).
 
-## Производительность
+## Performance
 
-Измерено 2026-11-04: Ryzen 5 5600X, 2×GPU (RTX 5060 Ti 16 ГБ + GTX 1660 SUPER 6 ГБ),
-llama.cpp b12083, `embeddinggemma-2-BF16`, `--parallel 4`, батч 32, `--max-tokens 512`.
+Measured on 2026-11-04: Ryzen 5 5600X, 2×GPU (RTX 5060 Ti 16 GB + GTX 1660
+SUPER 6 GB), llama.cpp b12083, `embeddinggemma-2-BF16`, `--parallel 4`,
+batch 32, `--max-tokens 512`.
 
-| Вход | Атомов | `--embedding-concurrency` | Время | Пик RSS |
+| Input | Atoms | `--embedding-concurrency` | Time | Peak RSS |
 |---|---:|---:|---:|---:|
-| 1 МБ уникального текста | 5 177 | 1 | 12.1 с | 113 МБ |
-| 1 МБ уникального текста | 5 177 | 4 | 8.3 с | 115 МБ |
-| 5 МБ уникального текста | 25 685 | 4 | 61.2 с | 342 МБ |
-| 20 МБ, streaming 4 МБ / 256 КБ | 108 712 | 4 | 221.5 с | 516 МБ |
-| 1 МБ, холодный кэш | 5 177 | 4 | 18.2 с | 114 МБ |
-| 1 МБ, тёплый кэш | 5 177 | 4 | 2.0 с | 62 МБ |
+| 1 MB unique text | 5 177 | 1 | 12.1 s | 113 MB |
+| 1 MB unique text | 5 177 | 4 | 8.3 s | 115 MB |
+| 5 MB unique text | 25 685 | 4 | 61.2 s | 342 MB |
+| 20 MB, streaming 4 MB / 256 KB | 108 712 | 4 | 221.5 s | 516 MB |
+| 1 MB, cold cache | 5 177 | 4 | 18.2 s | 114 MB |
+| 1 MB, warm cache | 5 177 | 4 | 2.0 s | 62 MB |
 
-- `--embedding-concurrency 4` даёт ~1.45× на 1 МБ; дальше упирается в GPU.
-- Холодная запись кэша добавляет ~10 с; тёплый прогон — 2 с (5 177 попаданий).
-- Document-mode: линейно ~12 с/МБ, 20 МБ ≈ 4 минуты и ~1.3 ГБ RSS (экстраполяция).
-- Streaming 20 МБ (окно 4 МБ, overlap 256 КБ): **3 мин 42 с, пик 516 МБ**;
-  11 567 чанков, без разрывов и дублей. Память ограничена окном.
-- `elapsedMs` в `--stats` включает построение семантического плана (эмбеддинги).
-- Проверка streaming: 2.65 МБ статей Википедии, окно 256 КБ, overlap 32 КБ,
-  concurrency 4 — 81.8 с, 2001 чанк, без разрывов и дублей; память ограничена
-  окном. Для сравнения тот же файл с `hash` — 0.9 с (без сети).
+- `--embedding-concurrency 4` gives ~1.45× on 1 MB; further gains are
+  limited by the GPU.
+- Cold cache write adds ~10 s; a warm run — 2 s (5 177 hits).
+- Document-mode: linearly ~12 s/MB, 20 MB ≈ 4 minutes and ~1.3 GB RSS
+  (extrapolated).
+- Streaming 20 MB (window 4 MB, overlap 256 KB): **3 min 42 s, peak 516
+  MB**; 11 567 chunks, no gaps and no duplicates. Memory is bounded by the
+  window.
+- Streaming check: 2.65 MB of Wikipedia articles, window 256 KB, overlap
+  32 KB, concurrency 4 — 81.8 s, 2001 chunks, no gaps and no duplicates;
+  memory is bounded by the window. For comparison, the same file with `hash`
+  — 0.9 s (no network).
 
-Поэтому semantic работает в document-mode с лимитом `--semantic-max-bytes`:
-весь текст буферизуется, строится план, затем идёт нарезка. Большие файлы
-переключаются на `recursive` с предупреждением (или падают при `--semantic-fallback error`).
-Для файлов больше лимита можно включить `--semantic-fallback streaming`: документ
-обрабатывается окнами по 4 МБ (настраивается), и память ограничена окном.
+That is why semantic works in document-mode with a `--semantic-max-bytes`
+limit: all text is buffered, the plan is built, then chunking runs. Larger
+files fall back to `recursive` with a warning (or fail with
+`--semantic-fallback error`). For files larger than the limit you can enable
+`--semantic-fallback streaming`: the document is processed in 4 MB windows
+(configurable), and memory is bounded by the window.
 
-Кэш эмбеддингов (`sha256(model + prompt + text)`) делает повторные прогоны
-практически бесплатными: промахи — только для новых атомов. Каталог scope
-включает endpoint, модель и размерность, поэтому одинаковые имена моделей на
-разных серверах не конфликтуют. Одинаковые тексты внутри одного прогона
-дедуплицируются, поэтому повторяющиеся фрагменты не эмбеддятся заново.
+The embedding cache (`sha256(model + prompt + text)`) makes repeated runs
+almost free: misses — only for new atoms. The cache directory scope includes
+the endpoint, model and dimension, so models with the same name on different
+servers do not conflict. Identical texts within a single run are
+deduplicated, so repeated fragments are not embedded again.
 
-Обслуживание кэша (CLI, без чтения входа):
+Cache maintenance (CLI, no input read):
 
 ```bash
-# посмотреть, что будет удалено
+# see what will be deleted
 textchunker --prune-cache --prune-cache-dry-run \
   --embedding-cache-ttl-days 30 \
   --embedding-cache-max-bytes 500000000
 
-# удалить
+# delete
 textchunker --prune-cache \
   --embedding-cache-ttl-days 30 \
   --embedding-cache-max-bytes 500000000
 ```
 
-При обычном прогоне `--embedding-cache-ttl-days` и
-`--embedding-cache-max-bytes` включают автоочистку перед обращением к кэшу.
-Последняя запись не удаляется, даже если она больше лимита.
+In a regular run, `--embedding-cache-ttl-days` and
+`--embedding-cache-max-bytes` enable auto-cleanup before accessing the cache.
+The last entry is not deleted even if it exceeds the limit.
 
-## Метаданные
+## Metadata
 
-Чанки семантической нарезки дополнительно содержат:
+Chunks from semantic chunking additionally contain:
 
 ```json
 "metadata": {
@@ -234,45 +253,47 @@ textchunker --prune-cache \
 }
 ```
 
-`semanticFallback` появляется только если сработал откат; `semanticModel` — если
-провайдер её знает.
+`semanticFallback` appears only if the fallback was triggered;
+`semanticModel` — if the provider knows the model.
 
-## Статистика
+## Stats
 
-С `--stats` (stderr) и в API-ответе `stats` появляются диагностические поля:
+With `--stats` (stderr) and in the API `stats`, the diagnostic fields appear:
 
 ```json
 {"chunkCount":8,"semanticAtomCount":23,"embeddingCacheHits":18,"embeddingCacheMisses":5}
 ```
 
-- `semanticAtomCount` — сколько атомов построил атомайзер (видно, насколько
-  мелко режется текст);
-- `embeddingCacheHits` / `embeddingCacheMisses` — сколько атомов обслужено из кэша
-  и сколько пришлось вычислять; помогают оценить стоимость повторного прогона.
-  Поля отсутствуют, если кэш отключён (`--no-embedding-cache`).
+- `semanticAtomCount` — how many atoms the atomizer produced (visible how
+  finely the text is split);
+- `embeddingCacheHits` / `embeddingCacheMisses` — how many atoms were
+  served from the cache and how many had to be computed; they help estimate
+  the cost of a re-run. The fields are absent when the cache is disabled
+  (`--no-embedding-cache`).
 
-## Ошибки
+## Errors
 
-| Ситуация | CLI | API |
+| Situation | CLI | API |
 |---|---:|---:|
-| Сервер эмбеддингов недоступен / невалидный ответ | 5 | 503 |
-| Неизвестный провайдер, невалидный перцентиль, префикс ≥ лимита | 2 | 400 |
-| Документ больше `--semantic-max-bytes` при `fallback=error` | 2 | 413 |
-| Документ больше лимита при `fallback=recursive` | 0 + предупреждение | 200 + `semanticFallback` |
-| `fallback=streaming` | 0, окна по 4 МБ | 200 + `semanticFallback: streaming` |
+| Embedding server unreachable / invalid response | 5 | 503 |
+| Unknown provider, invalid percentile, prefix ≥ limit | 2 | 400 |
+| Document larger than `--semantic-max-bytes` with `fallback=error` | 2 | 413 |
+| Document larger than the limit with `fallback=recursive` | 0 + warning | 200 + `semanticFallback` |
+| `fallback=streaming` | 0, 4 MB windows | 200 + `semanticFallback: streaming` |
 
-Если llama.cpp отвечает `input ... too large to process` (физический батч сервера
-меньше нашей порции), провайдер автоматически делит батч пополам, затем сам текст,
-и усредняет векторы частей. Если даже короткий вход не проходит — ошибка с советом
-увеличить `-b/--batch-size` сервера.
+If llama.cpp returns `input ... too large to process` (the server's physical
+batch is smaller than our portion), the provider automatically halves the
+batch, then the text, and averages the parts' vectors. If even a short input
+does not pass — an error with advice to increase the server's `-b/--batch-size`.
 
-## Тесты
+## Tests
 
-- Unit (без сети): атомизация, breakpoints на скриптованных векторах, чанкер, кэш,
-  HTTP-провайдер через fake-handler (включая параллельные батчи, 429, таймаут
-  и адаптивное дробление слишком больших входов), streaming-окна.
-- CLI/API с `--embedding-provider hash` — офлайн, включая `fallback=streaming`.
-- Gated-интеграция с живым сервером:
+- Unit (no network): atomization, breakpoints on scripted vectors, chunker,
+  cache, HTTP provider via a fake handler (including parallel batches, 429,
+  timeout and adaptive splitting of oversized input), streaming windows.
+- CLI/API with `--embedding-provider hash` — offline, including
+  `fallback=streaming`.
+- Gated integration with a live server:
 
 ```bash
 TEXTCHUNKER_LLAMA_CPP_URL=http://127.0.0.1:9932 \
@@ -280,18 +301,21 @@ TEXTCHUNKER_LLAMA_CPP_MODEL=embeddinggemma-2 \
 dotnet test tests/TextChunker.Tests --filter LlamaCppSemanticIntegration
 ```
 
-- CI: `.github/workflows/semantic-live.yml` — ручной/еженедельный прогон с
-  `llama-server` и компактной 768-мерной моделью `nomic-embed-text-v1.5`
-  (CPU, Ubuntu). В обычный push-CI не входит.
-- Ретраи 429 и таймаут проверены на живом HTTP через локальный прокси:
-  2 ответа 429 → 5 запросов → успех; задержка 5 с при `--embedding-timeout 1`
-  → exit 5 за ~1.1 с.
+- CI: `.github/workflows/semantic-live.yml` — manual/weekly run with
+  `llama-server` and a compact 768-dim `nomic-embed-text-v1.5` model
+  (CPU, Ubuntu). It is not included in the regular push-CI.
+- 429 retries and timeout were verified on a live HTTP through a local proxy:
+  2 responses 429 → 5 requests → success; 5 s delay at
+  `--embedding-timeout 1` → exit 5 in ~1.1 s.
 
-## Ограничения
+## Limitations
 
-- Document-mode (по умолчанию): весь текст в памяти, лимит 20 МБ.
-- `--semantic-fallback streaming` снимает лимит, но границы на стыках окон
-  могут быть менее точными; окно и перекрытие настраиваются.
-- `semanticAtomCount` в streaming — сумма по окнам (включая перекрытия).
-- Семантика зависит от модели и версии llama.cpp; фиксируйте квантизацию и параметры.
-- Markdown-структура (заголовки, списки, код) распознаётся, но не парсится полностью.
+- Document-mode (default): all text in memory, 20 MB limit.
+- `--semantic-fallback streaming` removes the limit, but boundaries at window
+  borders may be less accurate; the window and overlap are configurable.
+- `semanticAtomCount` in streaming — the sum over windows (including
+  overlaps).
+- Semantic quality depends on the model and the llama.cpp version; fix the
+  quantization and parameters.
+- Markdown structure (headings, lists, code) is recognized, but not parsed
+  fully.

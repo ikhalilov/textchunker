@@ -199,14 +199,15 @@ export TEXTCHUNKER_LOAD_TESTS=1GB      # + 1 GB
 
 ## Useful References
 
-- **README.md** – high‑level overview and quick start.
-- **docs/usage.md** – CLI command examples.
+- **README.md** – high‑level overview (features and links to docs).
+- **docs/building.md** – build, tests (including load tests), publishing.
+- **docs/usage.md** – CLI usage, quick start, parameters reference.
 - **docs/chunking‑strategies.md** – strategy details and limits.
 - **docs/tokenizers.md** – tokenizer modes and HuggingFace integration.
 - **docs/semantic‑chunking.md** – semantic strategy, embedding server, tuning.
 - **docs/api.md** – HTTP API contract and examples.
 - **docs/troubleshooting.md** – common issues and fixes.
-- **docs/architecture.md** – internal design and extensibility; see “Дальнейшие улучшения” for
+- **docs/architecture.md** – internal design and extensibility; see “Future improvements” for
   pending best-practice and design-pattern follow-ups.
 
 ---

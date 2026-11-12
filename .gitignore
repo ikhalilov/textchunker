@@ -489,3 +489,6 @@ $RECYCLE.BIN/
 
 # openspec: changes/, specs/ and config.yaml are versioned with the project
 # (do not add a blanket `openspec` ignore — it hides change/archive documents)
+
+# Local tokenizer download (~32 MB; scripts/fetch-tokenizer.*)
+tokenizer.json

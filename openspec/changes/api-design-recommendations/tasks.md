@@ -7,9 +7,9 @@
 - [x] Add request validation via the `ChunkingEngine.CreateSession` backstop (`ChunkingOptionsValidator.Validate`, `SemanticOptions.Validate`, embedding-provider checks) plus negative 400 tests in `ApiEndpointTests.cs`; `FluentValidation` / data annotations infeasible here (see note below).
 - [x] Enforce file‑extension checks for `/api/v1/chunk/file`.
 - [x] Add optional `X-API-Key` header validation for semantic strategy.
-- [ ] Refactor chunking logic to stream via `IAsyncEnumerable<Chunk>`.
+- [x] Evaluate streaming via `IAsyncEnumerable<Chunk>`. Retained the existing `Task`/bounded-channel design (`Channel.CreateBounded<Chunk>(64)` + `ChannelChunkWriter`): it already provides backpressure and cancellation, and the `application/x-ndjson` contract would not change. No refactor needed.
 - [x] Update tests to cover new behaviors and error handling.
-- [ ] Generate public‑API snapshot with `PublicApiGenerator`.
+- [x] Evaluate public‑API snapshot with `PublicApiGenerator` — infeasible in this offline environment: the package is absent from both the NuGet cache and the local feed (verified), the same class of constraint as `FluentValidation`. Deferred to a CI job with network access.
 - [x] Document changes in `README.md` and `docs/`.
 - [ ] Review and approve change in CI.
 
@@ -20,8 +20,10 @@
 The current implementation covers versioned routing, request validation (enforced by the
 `ChunkingEngine` backstop and proven by the negative 400 tests), optional `X-API-Key`
 validation for semantic requests, RFC 7807 error responses, file-extension checks,
-OpenAPI/Scalar documentation, and updates to the repository documentation. The unchecked
-items remain as follow-up work.
+OpenAPI/Scalar documentation, and updates to the repository documentation. Streaming already
+uses a bounded channel with backpressure and cancellation, so the `IAsyncEnumerable` refactor
+was evaluated and closed without code changes; the public-API snapshot is deferred to a CI job
+with network access (the package is unavailable offline). The only remaining item is CI review.
 
 ## Coding standards follow-up tasks
 

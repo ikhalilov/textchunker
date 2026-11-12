@@ -98,6 +98,18 @@ These items are tracked in `tasks.md` under “Additional review follow-up tasks
 - Resolved: when `TEXTCHUNKER_EMBEDDING_API_KEY` is set, a missing or mismatched `X-API-Key` is rejected with 401; when it is not set, semantic requests are allowed without a key. 
 - Should we add rate‑limiting or other protective measures for the semantic endpoint?
 
+## Implementation status (as delivered)
+
+- **Validation (Decision 5):** `FluentValidation` and data annotations are infeasible in this
+  offline/trimmed-reference environment; request validation is enforced by the
+  `ChunkingEngine` backstop (`ChunkingOptionsValidator`, `SemanticOptions.Validate`, provider
+  checks) and covered by the negative 400 tests.
+- **Async streaming (Decision 9):** retained the existing bounded `Channel<Chunk>` design
+  (backpressure + cancellation); the `application/x-ndjson` contract is unchanged, so no
+  `IAsyncEnumerable` refactor was needed.
+- **Public API snapshot (Decision 10):** deferred to CI with network access —
+  `PublicApiGenerator` is absent from the offline NuGet cache/feed.
+
 ---
 
 **Note**: Detailed implementation is left to the development team; this design document focuses on the architectural decisions and trade‑offs.

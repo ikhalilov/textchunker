@@ -29,6 +29,17 @@ The TextChunker project provides a CLI and minimal‑API service for chunking la
 - Updates to test projects to cover new behaviors.
 - Configuration changes for logging and API‑key support.
 
+## Implementation notes (as delivered)
+
+- Request validation is enforced by the `ChunkingEngine` backstop
+  (`ChunkingOptionsValidator`, `SemanticOptions.Validate`, provider checks) and covered by the
+  negative 400 tests; `FluentValidation` and data annotations are infeasible in the
+  offline/trimmed-reference environment.
+- Streaming keeps the existing bounded `Channel<Chunk>` (backpressure + cancellation) instead of
+  `IAsyncEnumerable<Chunk>`; the HTTP contract is unchanged.
+- The `PublicApiGenerator` snapshot is deferred to CI with network access (the package is
+  unavailable offline).
+
 ---
 
 **Note**: This proposal is a high‑level outline. Detailed design decisions are documented in the accompanying `design.md`.

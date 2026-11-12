@@ -6,7 +6,7 @@ using TextChunker.Abstractions;
 
 namespace TextChunker.Writers;
 
-/// <summary>Единая JSON-сериализация чанка (camelCase, без null, UTF-8-friendly escaping).</summary>
+/// <summary>Single JSON serialization of a chunk (camelCase, no nulls, UTF-8-friendly escaping).</summary>
 public static class ChunkJson
 {
     public static JsonSerializerOptions Options { get; } = new()
@@ -20,7 +20,7 @@ public static class ChunkJson
     public static string Serialize(Chunk chunk) => JsonSerializer.Serialize(chunk, Options);
 }
 
-/// <summary>JSON Lines: одна JSON-запись на чанк, UTF-8 без BOM, по строке на объект.</summary>
+/// <summary>JSON Lines: one JSON record per chunk, UTF-8 without BOM, one object per line.</summary>
 public sealed class JsonLinesWriter : IChunkWriter, IDisposable
 {
     private readonly TextWriter _writer;
@@ -61,7 +61,7 @@ public sealed class JsonLinesWriter : IChunkWriter, IDisposable
     }
 }
 
-/// <summary>Текстовый формат: маркер <c>=== CHUNK NNNNNN ===</c> и текст чанка.</summary>
+/// <summary>Text format: the <c>=== CHUNK NNNNNN ===</c> marker and the chunk text.</summary>
 public sealed class TextChunkWriter : IChunkWriter, IDisposable
 {
     private readonly TextWriter _writer;

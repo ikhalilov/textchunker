@@ -7,9 +7,9 @@ using TextChunker.Tokenizers;
 namespace TextChunker.Tests;
 
 /// <summary>
-/// Property-based инварианты нарезки: лимит не превышен, нет пустых чанков,
-/// детерминированность, восстановление текста (fixed, trim=false, без overlap),
-/// прогресс на случайных текстах (RU/EN/код/эмодзи/CJK) и параметрах.
+/// Property-based chunking invariants: the limit is not exceeded, there are no empty chunks,
+/// determinism, text reconstruction (fixed, trim=false, no overlap),
+/// progress on random texts (RU/EN/code/emoji/CJK) and parameters.
 /// </summary>
 public sealed class ChunkInvariantTests
 {

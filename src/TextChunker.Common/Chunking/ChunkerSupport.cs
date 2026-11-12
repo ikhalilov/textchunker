@@ -2,7 +2,7 @@ using TextChunker.Abstractions;
 
 namespace TextChunker.Chunking;
 
-/// <summary>Общие операции нарезки: обрезка пробелов, эмиссия сегментов, перекрытие.</summary>
+/// <summary>Shared chunking operations: whitespace trimming, segment emission, overlap.</summary>
 internal static class ChunkerSupport
 {
     public static int SkipWhitespace(string text, int index, bool trim)
@@ -30,7 +30,7 @@ internal static class ChunkerSupport
         return true;
     }
 
-    /// <summary>Добавить сегмент [start,end) с обрезкой пробелов по краям (если trim).</summary>
+    /// <summary>Add the segment [start,end) with whitespace trimmed at both edges (when trim).</summary>
     public static void AddSegment(List<ChunkSegment> segments, string text, int start, int end, bool trim)
     {
         if (trim)
@@ -53,7 +53,7 @@ internal static class ChunkerSupport
         segments.Add(new ChunkSegment(text.Substring(start, end - start), start, end));
     }
 
-    /// <summary>Перекрытие в единицах активного измерения (0 для words/bytes).</summary>
+    /// <summary>Overlap in units of the active measure (0 for words/bytes).</summary>
     public static int EffectiveOverlap(ChunkingOptions options)
     {
         return options.Unit switch
@@ -65,9 +65,9 @@ internal static class ChunkerSupport
     }
 
     /// <summary>
-    /// Начало перекрытия: CharIndex внутри только что выданного чанка [start,end),
-    /// с которого должен начаться следующий чанк. Возвращает end, если перекрытие
-    /// невозможно/не даёт прогресса.
+    /// Overlap start: the CharIndex inside the chunk [start,end) that was just emitted,
+    /// at which the next chunk must begin. Returns end if overlap
+    /// is impossible or makes no progress.
     /// </summary>
     public static int OverlapStart(
         ITokenizer tokenizer,

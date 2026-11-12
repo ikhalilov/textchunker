@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.2.0</Version>
-    <Description>Консольная утилита TextChunker: потоковая нарезка текста на чанки для RAG (JSON Lines).</Description>
+    <Description>TextChunker command-line utility: streaming text chunking for RAG (JSON Lines).</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>

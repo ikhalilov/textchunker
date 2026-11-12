@@ -3,7 +3,7 @@ using TextChunker.Abstractions.Embeddings;
 
 namespace TextChunker.Chunking.Semantic;
 
-/// <summary>Строит план семантических границ для куска текста.</summary>
+/// <summary>Builds a semantic boundary plan for a piece of text.</summary>
 public interface ISemanticPlanner
 {
     Task<SemanticPlan> PlanAsync(
@@ -13,9 +13,9 @@ public interface ISemanticPlanner
 }
 
 /// <summary>
-/// Планировщик семантических границ: атомизация → эмбеддинги (батчи + кэш внутри
-/// провайдера) → попарные расстояния <c>1 − cos</c> (опционально окна TextTiling) →
-/// границы там, где расстояние не ниже перцентиля и не меньше <c>minDistance</c>.
+/// Semantic boundary planner: atomization → embeddings (batching + caching inside
+/// the provider) → pairwise distances <c>1 − cos</c> (optionally TextTiling windows) →
+/// boundaries where the distance is at or above the percentile and at least <c>minDistance</c>.
 /// </summary>
 public sealed class SemanticPlanner : ISemanticPlanner
 {
@@ -100,8 +100,8 @@ public sealed class SemanticPlanner : ISemanticPlanner
     }
 
     /// <summary>
-    /// Расстояния между соседями. При <c>Window &gt; 1</c> сравниваются средние векторы
-    /// левого и правого окон (TextTiling) — это устойчивее к шуму отдельных предложений.
+    /// Distances between neighbours. When <c>Window &gt; 1</c>, the mean vectors
+    /// of the left and right windows (TextTiling) are compared — this is more robust to noise from individual sentences.
     /// </summary>
     private double[] ComputeDistances(IReadOnlyList<float[]> vectors, int dimensions)
     {
@@ -177,8 +177,8 @@ public sealed class SemanticPlanner : ISemanticPlanner
     }
 
     /// <summary>
-    /// Границы: расстояние не ниже перцентиля (nearest-rank) и не меньше minDistance.
-    /// Если все расстояния одинаковы, выделять нечего — границ не ставим.
+    /// Boundaries: the distance is at or above the percentile (nearest-rank) and at least minDistance.
+    /// If all distances are equal, there is nothing to separate out — no boundaries are placed.
     /// </summary>
     private List<int> SelectBreakpoints(IReadOnlyList<double> distances)
     {
@@ -208,8 +208,8 @@ public sealed class SemanticPlanner : ISemanticPlanner
     }
 
     /// <summary>
-    /// Markdown-заголовки — структурные границы: чанк должен начинаться с заголовка,
-    /// даже если эмбеддинг короткого заголовка близок к соседнему тексту.
+    /// Markdown headings are structural boundaries: a chunk must start with a heading,
+    /// even if the embedding of a short heading is close to the neighbouring text.
     /// </summary>
     private static void AddHeadingBreakpoints(IReadOnlyList<SemanticAtom> atoms, List<int> breakpoints)
     {
@@ -229,7 +229,7 @@ public sealed class SemanticPlanner : ISemanticPlanner
         }
     }
 
-    /// <summary>Перцентиль методом nearest-rank: <c>ceil(p·n)</c>-й по возрастанию.</summary>
+    /// <summary>Percentile by the nearest-rank method: the <c>ceil(p·n)</c>-th value in ascending order.</summary>
     internal static double Percentile(IReadOnlyList<double> values, double percentile)
     {
         if (values.Count == 0)

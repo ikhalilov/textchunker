@@ -1,29 +1,29 @@
 namespace TextChunker.Chunking.Semantic;
 
-/// <summary>Тип атома — единицы текста, которую семантическая нарезка считает неделимой.</summary>
+/// <summary>Atom kind — a text unit that semantic chunking treats as indivisible.</summary>
 public enum SemanticAtomKind
 {
-    /// <summary>Предложение или его часть.</summary>
+    /// <summary>A sentence or part of one.</summary>
     Sentence,
 
-    /// <summary>Заголовок Markdown (<c># …</c>).</summary>
+    /// <summary>A Markdown heading (<c># …</c>).</summary>
     Heading,
 
-    /// <summary>Элемент списка (<c>- </c>, <c>* </c>, <c>1. </c>).</summary>
+    /// <summary>A list item (<c>- </c>, <c>* </c>, <c>1. </c>).</summary>
     ListItem,
 
-    /// <summary>Блок кода в ограждении (<c>```</c> / <c>~~~</c>), не режется.</summary>
+    /// <summary>A fenced code block (<c>```</c> / <c>~~~</c>), never split.</summary>
     Code,
 
-    /// <summary>Прочий текст (например, строка без признаков структуры).</summary>
+    /// <summary>Other text (for example, a line with no structural markers).</summary>
     Text
 }
 
 /// <summary>
-/// Атом семантической нарезки: <see cref="Text"/> — обрезанное содержимое,
-/// <see cref="Start"/>/<see cref="End"/> — его границы в исходном тексте
-/// (<see cref="End"/> исключающий, UTF-16 индексы). Атомы упорядочены, не пересекаются;
-/// промежутки между ними — разделители (пробелы/переводы строк).
+/// A semantic chunking atom: <see cref="Text"/> is the trimmed content,
+/// <see cref="Start"/>/<see cref="End"/> are its boundaries in the source text
+/// (<see cref="End"/> is exclusive, UTF-16 indices). Atoms are ordered and do not overlap;
+/// the gaps between them are separators (whitespace/line breaks).
 /// </summary>
 public sealed record SemanticAtom(string Text, int Start, int End, SemanticAtomKind Kind)
 {

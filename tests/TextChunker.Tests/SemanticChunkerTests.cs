@@ -4,7 +4,7 @@ using TextChunker.Tokenizers;
 
 namespace TextChunker.Tests;
 
-/// <summary>Атомизация: предложения, Markdown, списки, code fences, сокращения, смещения.</summary>
+/// <summary>Atomization: sentences, Markdown, lists, code fences, abbreviations, offsets.</summary>
 public sealed class SemanticAtomizerTests
 {
     private static readonly WordTokenizer Tokenizer = new();
@@ -95,7 +95,7 @@ public sealed class SemanticAtomizerTests
         Assert.Equal(3, atoms.Count);
         Assert.Equal(SemanticAtomKind.Code, atoms[1].Kind);
 
-        // Ограждения сохраняются: атом точно покрывает исходный регион.
+        // Protection fences are preserved: the atom exactly covers the source region.
         Assert.Equal("```csharp\nvar x = 1;\n// комментарий. Он не предложение.\n```", atoms[1].Text);
         Assert.Equal("Введение.", atoms[0].Text);
         Assert.Equal("Заключение.", atoms[2].Text);
@@ -223,7 +223,7 @@ public sealed class SemanticAtomizerTests
     }
 }
 
-/// <summary>Планировщик семантических границ на скриптованных векторах (без реальной модели).</summary>
+/// <summary>Semantic boundary planner on scripted vectors (without a real model).</summary>
 public sealed class SemanticPlannerTests
 {
     private static readonly WordTokenizer Tokenizer = new();
@@ -231,7 +231,7 @@ public sealed class SemanticPlannerTests
     private static readonly float[] AxisA = { 1f, 0f };
     private static readonly float[] AxisB = { 0f, 1f };
 
-    /// <summary>Провайдер, возвращающий векторы из словаря по тексту атома.</summary>
+    /// <summary>A provider that returns vectors from a dictionary keyed by the atom text.</summary>
     private sealed class ScriptedProvider : IEmbeddingProvider, IEmbeddingModelInfo
     {
         private readonly Dictionary<string, float[]> _vectors;
@@ -262,7 +262,7 @@ public sealed class SemanticPlannerTests
         MinDistance = 0.02
     };
 
-    /// <summary>Шесть предложений: первые три — ось A, последние три — ось B.</summary>
+    /// <summary>Six sentences: the first three along axis A, the last three along axis B.</summary>
     private static (string Text, Dictionary<string, float[]> Vectors) ClusteredDocument()
     {
         var vectors = new Dictionary<string, float[]>
@@ -322,7 +322,7 @@ public sealed class SemanticPlannerTests
 
         Assert.Equal(new[] { 3 }, plan.Breakpoints);
 
-        // Средние по окнам: cos(A, (2A+B)/3) = 2/√5 → d = 1 − 2/√5 и т.д.
+        // Window averages: cos(A, (2A+B)/3) = 2/√5 → d = 1 − 2/√5, etc.
         double[] expected =
         {
             1.0 - 2.0 / Math.Sqrt(5.0),

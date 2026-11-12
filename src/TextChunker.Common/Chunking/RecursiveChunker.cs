@@ -3,8 +3,8 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking;
 
 /// <summary>
-/// Рекурсивная нарезка по иерархическому списку разделителей (<see cref="ChunkingOptions.Separators"/>,
-/// от крупного к мелкому). Слишком крупная часть дробится следующим разделителем или жёстко.
+/// Recursive chunking over a hierarchical separator list (<see cref="ChunkingOptions.Separators"/>,
+/// from coarse to fine). A part that is too large is split by the next separator or split hard.
 /// </summary>
 public sealed class RecursiveChunker : IChunker
 {

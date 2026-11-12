@@ -3,10 +3,10 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking;
 
 /// <summary>
-/// Фиксированная нарезка: каждый чанк — максимальный префикс, укладывающийся в лимит
-/// активной единицы; следующий чанк начинается через <c>overlap</c> единиц от конца
-/// предыдущего. Если остаток фрагмента помещается в лимит и это не EOF, чанк
-/// не выдаётся — нужно больше текста (потоковый режим).
+/// Fixed-size chunking: each chunk is the longest prefix that fits the limit
+/// of the active unit; the next chunk starts <c>overlap</c> units before the end
+/// of the previous one. If the remainder of the fragment fits the limit and this is not EOF,
+/// no chunk is emitted — more text is needed (streaming mode).
 /// </summary>
 public sealed class FixedChunker : IChunker
 {
@@ -42,7 +42,7 @@ public sealed class FixedChunker : IChunker
             bool reachesEnd = cut >= text.Length;
             if (reachesEnd && !final)
             {
-                // Остаток помещается в лимит: возможно, следующие строки его продолжат.
+                // The remainder fits the limit: subsequent lines may extend it.
                 return new ChunkSplit
                 {
                     Segments = segments,

@@ -1,6 +1,6 @@
 namespace TextChunker.Sources;
 
-/// <summary>Связка потоков: сначала из MemoryStream (головные байты), затем из исходного Stream.</summary>
+/// <summary>Chain of streams: first from the MemoryStream (head bytes), then from the source Stream.</summary>
 internal sealed class ConcatStream : Stream
 {
     private readonly Stream _first;
@@ -24,9 +24,9 @@ internal sealed class ConcatStream : Stream
         set => throw new NotSupportedException();
     }
 
-    // Пустая заглушка: ConcatStream — только чтение, сбрасывать нечего.
-    // Guard на CanWrite защищает от рекурсии в dispose-пути (Close() -> Flush()),
-    // где base.Stream.Dispose() сам вызывает Flush()/Close().
+    // Empty stub: ConcatStream is read-only, there is nothing to flush.
+    // The CanWrite guard protects against recursion in the dispose path (Close() -> Flush()),
+    // where base.Stream.Dispose() itself calls Flush()/Close().
     public override void Flush()
     {
         if (!CanWrite)

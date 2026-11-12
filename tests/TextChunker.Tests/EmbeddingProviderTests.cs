@@ -8,7 +8,7 @@ using TextChunker.Embeddings;
 
 namespace TextChunker.Tests;
 
-/// <summary>Детерминированный офлайн-провайдер: хешинг-трик по словам и n-граммам.</summary>
+/// <summary>Deterministic offline provider: hashing trick over words and n-grams.</summary>
 public sealed class HashEmbeddingProviderTests
 {
     private readonly HashEmbeddingProvider _provider = new();
@@ -84,7 +84,7 @@ public sealed class HashEmbeddingProviderTests
     }
 }
 
-/// <summary>HTTP-провайдер llama.cpp: формат запроса, батчи, ретраи, валидация ответа.</summary>
+/// <summary>HTTP provider for llama.cpp: request format, batching, retries, response validation.</summary>
 public sealed class LlamaCppEmbeddingProviderTests
 {
     private static readonly EmbeddingOptions DefaultOptions = new()
@@ -145,8 +145,8 @@ public sealed class LlamaCppEmbeddingProviderTests
     [Fact]
     public async Task OrdersResponseByIndex()
     {
-        // Ответ приходит в обратном порядке индексов; провайдер обязан восстановить порядок.
-        // Векторы — базисные, чтобы L2-нормализация их не меняла.
+        // The response arrives in reverse index order; the provider must restore the order.
+        // The vectors are basis vectors so that L2 normalization does not change them.
         var handler = new FakeEmbeddingHandler();
         handler.Enqueue(
             HttpStatusCode.OK,
@@ -536,7 +536,7 @@ public sealed class LlamaCppEmbeddingProviderTests
         return builder.ToString();
     }
 
-    /// <summary>Ждёт, пока одновременно не наберётся ожидаемое число запросов, и возвращает базисный вектор.</summary>
+    /// <summary>Waits until the expected number of requests is in flight concurrently, then returns a basis vector.</summary>
     private sealed class ParallelTrackingHandler : HttpMessageHandler
     {
         private readonly int _expectedConcurrency;
@@ -599,7 +599,7 @@ public sealed class LlamaCppEmbeddingProviderTests
         }
     }
 
-    /// <summary>Запрос «зависает», чтобы проверить срабатывание таймаута.</summary>
+    /// <summary>The request "hangs" so that the timeout firing can be verified.</summary>
     private sealed class HangingHandler : HttpMessageHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(
@@ -660,7 +660,7 @@ public sealed class LlamaCppEmbeddingProviderTests
     }
 }
 
-/// <summary>Дисковый кэш эмбеддингов и декоратор с кэшем.</summary>
+/// <summary>Disk cache for embeddings and the caching decorator.</summary>
 public sealed class EmbeddingCacheTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"textchunker-embed-{Guid.NewGuid():N}");
@@ -731,7 +731,7 @@ public sealed class EmbeddingCacheTests : IDisposable
         cache.Set("abc", new float[] { 1, 2, 3 });
         string path = cache.GetPath("abc");
 
-        // Корректная магия, но длина тела не соответствует заявленной размерности.
+        // Valid magic, but the body length does not match the declared dimension.
         using (var stream = File.Open(path, FileMode.Open, FileAccess.Write))
         using (var writer = new BinaryWriter(stream))
         {
@@ -830,7 +830,7 @@ public sealed class EmbeddingCacheTests : IDisposable
     {
         string staleRoot = Path.Combine(_root, "stale");
         var cache = new EmbeddingCache("model", null, staleRoot);
-        cache.Set("abc", new float[] { 1, 2 }); // 2 измерений, провайдер ожидает 4
+        cache.Set("abc", new float[] { 1, 2 }); // 2 dimensions, the provider expects 4
 
         var spy = new SpyProvider();
         var provider = new CachedEmbeddingProvider(spy, cache);
@@ -868,7 +868,7 @@ public sealed class EmbeddingCacheTests : IDisposable
     }
 }
 
-/// <summary>Фабрика провайдеров: имена, валидация, кэш, API-ключ из окружения.</summary>
+/// <summary>Provider factory: names, validation, cache, API key from the environment.</summary>
 public sealed class EmbeddingProviderFactoryTests
 {
     [Fact]
@@ -998,7 +998,7 @@ public sealed class EmbeddingProviderFactoryTests
     }
 }
 
-/// <summary>Валидация семантических параметров.</summary>
+/// <summary>Validation of semantic parameters.</summary>
 public sealed class SemanticOptionsTests
 {
     [Fact]

@@ -3,9 +3,9 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking;
 
 /// <summary>
-/// Нарезка по абзацам: сначала разбиение по пустым строкам (<c>\n\n</c>), затем
-/// жадное объединение малых абзацев до лимита и суб-разбивка крупных абзацев
-/// оставшимися разделителями (recursive/hard fallback).
+/// Paragraph chunking: first split on blank lines (<c>\n\n</c>), then
+/// greedily merge small paragraphs up to the limit and split large paragraphs further
+/// with the remaining separators (recursive/hard fallback).
 /// </summary>
 public sealed class ParagraphChunker : IChunker
 {

@@ -1,8 +1,8 @@
 namespace TextChunker;
 
 /// <summary>
-/// Ошибка загрузки/инициализации модельного токенизатора (HF tokenizer.json,
-/// модель, сетевая ошибка). Программа переводит в stderr + exit code 5 (task 3.5).
+/// Error loading/initializing a model tokenizer (HF tokenizer.json,
+/// model, network error). The program maps it to stderr + exit code 5 (task 3.5).
 /// </summary>
 public sealed class TokenizerLoadException : Exception
 {

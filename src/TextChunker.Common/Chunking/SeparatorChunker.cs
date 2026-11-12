@@ -3,10 +3,10 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking;
 
 /// <summary>
-/// Общий движок иерархической нарезки по разделителям (recursive/paragraph):
-/// рекурсивно дробит фрагмент разделителями, затем жадно упаковывает части
-/// в чанки не больше лимита. Не гарантирует разрыв только по разделителю —
-/// слишком крупная часть дробится жёстко (fallback).
+/// Shared engine for hierarchical separator-based chunking (recursive/paragraph):
+/// recursively splits the fragment by separators, then greedily packs the parts
+/// into chunks no larger than the limit. It does not guarantee splitting only at separators —
+/// a part that is too large is split hard (fallback).
 /// </summary>
 internal static class SeparatorChunker
 {
@@ -92,7 +92,7 @@ internal static class SeparatorChunker
 
         if (!final && mayContinue)
         {
-            // Последняя часть может продолжиться следующим фрагментом — не выдаём её.
+            // The last part may be continued by the next fragment — do not emit it yet.
             consumed = RetainOverlapStart(text, options, tokenizer, segments, overlap, accStart);
             moreNeeded = true;
         }
@@ -114,8 +114,8 @@ internal static class SeparatorChunker
     }
 
     /// <summary>
-    /// Если перекрытие включено и уже есть выданные сегменты, оставляем в буфере хвост
-    /// последнего чанка (следующий чанк начнётся с него). Иначе — <paramref name="fallback"/>.
+    /// If overlap is enabled and segments have already been emitted, keep the tail
+    /// of the last chunk in the buffer (the next chunk will start with it). Otherwise — <paramref name="fallback"/>.
     /// </summary>
     private static int RetainOverlapStart(
         string text,

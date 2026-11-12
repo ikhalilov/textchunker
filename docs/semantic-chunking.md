@@ -80,7 +80,7 @@ Verification:
 curl http://127.0.0.1:9932/health
 curl http://127.0.0.1:9932/v1/embeddings \
   -H "Content-Type: application/json" \
-  -d '{"model":"embeddinggemma-2","input":["привет мир"]}'
+  -d '{"model":"embeddinggemma-2","input":["hello world"]}'
 ```
 
 A 768-dimensional L2-normalized vector is expected. The first request after a

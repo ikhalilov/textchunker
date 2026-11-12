@@ -5,9 +5,9 @@ using TextChunker.Abstractions.Embeddings;
 namespace TextChunker.Embeddings;
 
 /// <summary>
-/// Детерминированный офлайн-провайдер: hashing trick по словам и символьным n-граммам.
-/// Не даёт семантического качества embeddinggemma, но стабилен между запусками и машинами,
-/// поэтому используется в unit/CI-тестах и как fallback без GPU.
+/// Deterministic offline provider: the hashing trick over words and character n-grams.
+/// It does not provide the semantic quality of embeddinggemma, but it is stable across runs and machines,
+/// so it is used in unit/CI tests and as a fallback without a GPU.
 /// </summary>
 public sealed class HashEmbeddingProvider : IEmbeddingProvider
 {
@@ -54,7 +54,7 @@ public sealed class HashEmbeddingProvider : IEmbeddingProvider
         return Task.FromResult<IReadOnlyList<float[]>>(vectors);
     }
 
-    /// <summary>Вектор одного текста: L2-нормализованный, детерминированный по содержимому.</summary>
+    /// <summary>Vector of a single text: L2-normalized, deterministic with respect to the content.</summary>
     public float[] Embed(string text)
     {
         float[] vector = new float[_dimensions];

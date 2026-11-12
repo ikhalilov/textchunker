@@ -184,7 +184,7 @@ export TEXTCHUNKER_LOAD_TESTS=1GB      # + 1 GB
 
 | Issue | Cause | Fix |
 |---|---|---|
-| `stdin не переопределён` (exit 1) | No `--input` and no stdin redirection | Provide `--input <file>` or pipe input (`cat file | textchunker`). |
+| `stdin is not redirected` (exit 1) | No `--input` and no stdin redirection | Provide `--input <file>` or pipe input (`cat file | textchunker`). |
 | `exit 5` – tokenizer or embedding provider error | `tokenizer.json` missing, server unreachable, wrong model ID | Run `scripts/fetch-tokenizer.ps1`/`.sh` to download the file; start `llama.cpp` with correct flags; set `TEXTCHUNKER_LLAMA_CPP_URL` and `TEXTCHUNKER_LLAMA_CPP_MODEL`. |
 | `401` – unauthorized semantic request | `TEXTCHUNKER_EMBEDDING_API_KEY` is set but `X-API-Key` is missing or wrong on `/api/v1/chunk*` | Send `X-API-Key` with the same value. |
 | `413` – request too large | Input exceeds `Chunking:MaxTextChars` (20 MB) | Reduce input size or use `--semantic-fallback streaming`. |

@@ -12,8 +12,8 @@ Next to each `NN-name.md` there is a `NN-name.json`:
 ```json
 {
   "boundaries": [
-    "# Следующий раздел",
-    "Первое предложение новой темы."
+    "# Next section",
+    "First sentence of the new topic."
   ]
 }
 ```

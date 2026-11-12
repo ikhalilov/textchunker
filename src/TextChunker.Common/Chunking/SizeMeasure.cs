@@ -5,8 +5,8 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking;
 
 /// <summary>
-/// Измерение размера текста в активной единице. Для токенов учитывает task-префикс:
-/// лимит применяется к <c>prefix + text</c> (см. chunker-chunking / Task prefix).
+/// Measuring text size in the active unit. For tokens it accounts for the task prefix:
+/// the limit applies to <c>prefix + text</c> (see chunker-chunking / Task prefix).
 /// </summary>
 internal sealed class SizeMeasure
 {
@@ -25,10 +25,10 @@ internal sealed class SizeMeasure
 
     public SizeUnit Unit { get; }
 
-    /// <summary>Число токенов префикса (0 для не-токенных единиц).</summary>
+    /// <summary>Number of prefix tokens (0 for non-token units).</summary>
     public int PrefixTokens { get; }
 
-    /// <summary>Размер текста в активной единице (с префиксом для токенов).</summary>
+    /// <summary>Text size in the active unit (including the prefix for tokens).</summary>
     public int Count(string text)
     {
         return Unit switch
@@ -44,9 +44,9 @@ internal sealed class SizeMeasure
     }
 
     /// <summary>
-    /// Наибольший индекс (exclusive) в [<paramref name="start"/>..text.Length], при котором
-    /// размер <c>text[start..idx]</c> не превышает <paramref name="max"/>.
-    /// Возвращает <paramref name="start"/>, если не помещается ни одна единица.
+    /// Largest index (exclusive) in [<paramref name="start"/>..text.Length] at which
+    /// the size of <c>text[start..idx]</c> does not exceed <paramref name="max"/>.
+    /// Returns <paramref name="start"/> if not even one unit fits.
     /// </summary>
     public int MaxCut(string text, int start, int max)
     {
@@ -65,7 +65,7 @@ internal sealed class SizeMeasure
         };
     }
 
-    /// <summary>Сдвиг на один код-поинт вперёд (не разрывая суррогатную пару).</summary>
+    /// <summary>Advance by one code point (without breaking a surrogate pair).</summary>
     public static int NextCodePoint(string text, int index, int limit)
     {
         if (index >= limit)
@@ -113,7 +113,7 @@ internal sealed class SizeMeasure
             return text.Length;
         }
 
-        // CutAtTokenBoundary 0-based: allowed — число токенов, которые оставляем.
+        // CutAtTokenBoundary is 0-based: allowed is the number of tokens we keep.
         int tokensToKeep = allowed;
         while (tokensToKeep > 0)
         {
@@ -127,7 +127,7 @@ internal sealed class SizeMeasure
                 relative = segment.Length;
             }
 
-            // Граница склейки prefix+text может добавить токен — проверяем фактический размер.
+            // Concatenating prefix+text may add a token — verify the actual size.
             if (Count(segment.Substring(0, relative)) <= max)
             {
                 return start + relative;
@@ -182,7 +182,7 @@ internal sealed class SizeMeasure
         return SafeCharCut(text, start, lo);
     }
 
-    /// <summary>Не разрешаем резу между high- и low-surrogate.</summary>
+    /// <summary>Do not allow a cut between a high and a low surrogate.</summary>
     private static int SafeCharCut(string text, int start, int cut)
     {
         if (cut > text.Length)

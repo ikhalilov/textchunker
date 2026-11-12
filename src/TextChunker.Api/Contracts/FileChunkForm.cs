@@ -3,112 +3,112 @@ using System.Text.Json;
 namespace TextChunker.Api.Contracts;
 
 /// <summary>
-/// Поля формы multipart для загрузки файла (<c>POST /api/chunk/file</c>).
-/// Совпадают по смыслу с <see cref="ChunkRequest"/>, но приходят как form-data.
+/// multipart form fields for file upload (<c>POST /api/chunk/file</c>).
+/// They mirror <see cref="ChunkRequest"/>, but arrive as form data.
 /// </summary>
 public sealed class FileChunkForm
 {
-    /// <summary>Стратегия: fixed | recursive | paragraph | semantic (по умолчанию recursive).</summary>
+    /// <summary>Strategy: fixed | recursive | paragraph | semantic (default: recursive).</summary>
     public string? Strategy { get; set; }
-    /// <summary>Токенизатор: none | char | word | regex | huggingface (по умолчанию word).</summary>
+    /// <summary>Tokenizer: none | char | word | regex | huggingface (default: word).</summary>
     public string? Tokenizer { get; set; }
-    /// <summary>HF-модель или путь к tokenizer.json.</summary>
+    /// <summary>HuggingFace model or path to tokenizer.json.</summary>
     public string? TokenizerModel { get; set; }
-    /// <summary>Явный путь к локальному tokenizer.json (приоритетнее TokenizerModel).</summary>
+    /// <summary>Explicit path to a local tokenizer.json (takes precedence over TokenizerModel).</summary>
     public string? TokenizerPath { get; set; }
-    /// <summary>Каталог кэша tokenizer.json.</summary>
+    /// <summary>tokenizer.json cache directory.</summary>
     public string? TokenizerCacheDir { get; set; }
-    /// <summary>Task-префикс, учитываемый в лимите токенов.</summary>
+    /// <summary>Task prefix counted toward the token limit.</summary>
     public string? Prefix { get; set; }
 
-    /// <summary>Максимум токенов на чанк (по умолчанию 512, если не задан ни один лимит).</summary>
+    /// <summary>Maximum tokens per chunk (default: 512 when no limit is specified).</summary>
     public int? MaxTokens { get; set; }
-    /// <summary>Максимум символов на чанк.</summary>
+    /// <summary>Maximum characters per chunk.</summary>
     public int? MaxChars { get; set; }
-    /// <summary>Максимум слов на чанк.</summary>
+    /// <summary>Maximum words per chunk.</summary>
     public int? MaxWords { get; set; }
-    /// <summary>Максимум байт UTF-8 на чанк.</summary>
+    /// <summary>Maximum UTF-8 bytes per chunk.</summary>
     public int? MaxBytes { get; set; }
 
-    /// <summary>Минимум токенов для финального чанка.</summary>
+    /// <summary>Minimum tokens for the final chunk.</summary>
     public int? MinTokens { get; set; }
-    /// <summary>Минимум символов для финального чанка.</summary>
+    /// <summary>Minimum characters for the final chunk.</summary>
     public int? MinChars { get; set; }
-    /// <summary>Минимум слов для финального чанка.</summary>
+    /// <summary>Minimum words for the final chunk.</summary>
     public int? MinWords { get; set; }
 
-    /// <summary>Перекрытие соседних чанков в токенах.</summary>
+    /// <summary>Overlap between adjacent chunks in tokens.</summary>
     public int? OverlapTokens { get; set; }
-    /// <summary>Перекрытие соседних чанков в символах.</summary>
+    /// <summary>Overlap between adjacent chunks in characters.</summary>
     public int? OverlapChars { get; set; }
 
-    /// <summary>Обрезать пробелы по краям чанка (по умолчанию true).</summary>
+    /// <summary>Trim whitespace at chunk edges (default: true).</summary>
     public bool? Trim { get; set; }
-    /// <summary>Отбросить финальный чанк меньше минимума.</summary>
+    /// <summary>Drop the final chunk when it is smaller than the minimum.</summary>
     public bool? DropSmall { get; set; }
 
-    /// <summary>JSON-массив строк, например <c>["\n\n","\n"]</c>.</summary>
+    /// <summary>JSON array of strings, for example <c>["\n\n","\n"]</c>.</summary>
     public string? Separators { get; set; }
 
-    /// <summary>JSON-объект пользовательских метаданных.</summary>
+    /// <summary>JSON object of user metadata.</summary>
     public string? Metadata { get; set; }
 
-    /// <summary>Метка источника для top-level source и id (по умолчанию имя файла).</summary>
+    /// <summary>Source label for the top-level source and id (default: file name).</summary>
     public string? Source { get; set; }
 
-    /// <summary>Кодировка файла (по умолчанию utf-8; поддерживаются кодовые страницы).</summary>
+    /// <summary>File encoding (default: utf-8; code pages are supported).</summary>
     public string? Encoding { get; set; }
 
-    /// <summary>replace (по умолчанию) или error.</summary>
+    /// <summary>replace (default) or error.</summary>
     public string? InvalidEncoding { get; set; }
 
-    /// <summary>JSON-объекты с теми же полями, что в JSON endpoint.</summary>
+    /// <summary>JSON objects with the same fields as in the JSON endpoint.</summary>
     public string? Embedding { get; set; }
-    /// <summary>JSON-объект параметров семантических границ (как поле semantic в /api/chunk).</summary>
+    /// <summary>JSON object of semantic boundary parameters (like the semantic field in /api/chunk).</summary>
     public string? Semantic { get; set; }
 
-    /// <summary>Провайдер эмбеддингов: llama-cpp | hash.</summary>
+    /// <summary>Embedding provider: llama-cpp | hash.</summary>
     public string? EmbeddingProvider { get; set; }
-    /// <summary>URL сервера эмбеддингов.</summary>
+    /// <summary>Embedding server URL.</summary>
     public string? EmbeddingEndpoint { get; set; }
-    /// <summary>Имя модели в запросе к серверу эмбеддингов.</summary>
+    /// <summary>Model name sent to the embedding server.</summary>
     public string? EmbeddingModel { get; set; }
-    /// <summary>Размер батча эмбеддингов.</summary>
+    /// <summary>Embedding batch size.</summary>
     public int? EmbeddingBatchSize { get; set; }
-    /// <summary>Символьный бюджет батча (0 — только по количеству).</summary>
+    /// <summary>Batch character budget (0 — count only).</summary>
     public int? EmbeddingMaxBatchChars { get; set; }
-    /// <summary>Сколько батчей отправлять параллельно.</summary>
+    /// <summary>How many batches to send in parallel.</summary>
     public int? EmbeddingConcurrency { get; set; }
-    /// <summary>Таймаут HTTP-запроса к серверу эмбеддингов, секунды.</summary>
+    /// <summary>HTTP timeout for embedding server requests, seconds.</summary>
     public int? EmbeddingTimeoutSeconds { get; set; }
-    /// <summary>Повторы на сетевые ошибки и 429/5xx.</summary>
+    /// <summary>Retries for network errors and 429/5xx.</summary>
     public int? EmbeddingMaxRetries { get; set; }
-    /// <summary>Префикс-промпт, добавляемый к каждому атому.</summary>
+    /// <summary>Prefix prompt added to each atom.</summary>
     public string? EmbeddingPrompt { get; set; }
-    /// <summary>Каталог кэша эмбеддингов.</summary>
+    /// <summary>Embedding cache directory.</summary>
     public string? EmbeddingCacheDir { get; set; }
-    /// <summary>Использовать дисковый кэш эмбеддингов (по умолчанию true).</summary>
+    /// <summary>Use the on-disk embedding cache (default: true).</summary>
     public bool? EmbeddingUseCache { get; set; }
-    /// <summary>Ожидаемая размерность векторов (0 — не проверять).</summary>
+    /// <summary>Expected vector dimension (0 — do not validate).</summary>
     public int? EmbeddingDimensions { get; set; }
 
-    /// <summary>Перцентиль расстояний для границ, (0, 1].</summary>
+    /// <summary>Percentile of distances used for boundaries, (0, 1].</summary>
     public double? SemanticPercentile { get; set; }
-    /// <summary>Минимальная дистанция границы.</summary>
+    /// <summary>Minimum boundary distance.</summary>
     public double? SemanticMinDistance { get; set; }
-    /// <summary>Окно TextTiling (1 — соседние атомы).</summary>
+    /// <summary>TextTiling window (1 — adjacent atoms).</summary>
     public int? SemanticWindow { get; set; }
-    /// <summary>Лимит объёма входа document-mode, байт.</summary>
+    /// <summary>Input size limit in document mode, bytes.</summary>
     public long? SemanticMaxBytes { get; set; }
-    /// <summary>Размер окна streaming-режима, байт.</summary>
+    /// <summary>Streaming window size, bytes.</summary>
     public int? SemanticStreamWindowBytes { get; set; }
-    /// <summary>Перекрытие streaming-окон, байт.</summary>
+    /// <summary>Overlap between streaming windows, bytes.</summary>
     public int? SemanticStreamOverlapBytes { get; set; }
-    /// <summary>Поведение при превышении лимита: recursive | error | streaming.</summary>
+    /// <summary>Behavior when the limit is exceeded: recursive | error | streaming.</summary>
     public string? SemanticFallback { get; set; }
-    /// <summary>Склейка атомов короче N символов.</summary>
+    /// <summary>Merge atoms shorter than N characters.</summary>
     public int? SemanticMinAtomChars { get; set; }
-    /// <summary>Предварительное дробление атомов длиннее N токенов.</summary>
+    /// <summary>Pre-split atoms longer than N tokens.</summary>
     public int? SemanticMaxAtomTokens { get; set; }
 
     public ChunkRequest ToRequest(string text)

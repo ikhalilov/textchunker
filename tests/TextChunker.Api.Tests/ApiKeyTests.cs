@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 
 namespace TextChunker.Api.Tests;
 
-/// <summary>Проверяет централизованную проверку X-API-Key для semantic-запросов.</summary>
+/// <summary>Verifies centralized X-API-Key validation for semantic requests.</summary>
 public sealed class ApiKeyTests(ApiServerWithApiKeyFixture fixture) : IClassFixture<ApiServerWithApiKeyFixture>
 {
     private readonly ApiServerWithApiKeyFixture _fixture = fixture;

@@ -5,13 +5,13 @@ using System.Text.RegularExpressions;
 using TextChunker.Abstractions;
 
 /// <summary>
-/// Токенизатор «regex»: токены = совпадения регулярного выражения.
-/// По умолчанию — последовательности Unicode-букв и цифр, т.е. <c>[\p{L}\p{N}]</c>+ (слова без знаков препинания/пробелов).
-/// Граница — CharIndex начала n-го совпадения (0-based); n >= count → text.Length.
+/// The "regex" tokenizer: tokens are regular expression matches.
+/// By default — sequences of Unicode letters and digits, i.e. <c>[\p{L}\p{N}]</c>+ (words without punctuation/whitespace).
+/// A boundary is the CharIndex of the start of the n-th match (0-based); n >= count → text.Length.
 /// </summary>
 public sealed class RegexTokenizer : ITokenizer
 {
-    /// <summary>По умолчанию: последовательности Unicode-букв и цифр.</summary>
+    /// <summary>By default: sequences of Unicode letters and digits.</summary>
     public const string DefaultPattern = @"[\p{L}\p{N}]+";
 
     private readonly Regex _regex;

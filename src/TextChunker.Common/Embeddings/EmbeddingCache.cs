@@ -5,11 +5,11 @@ using System.Text;
 namespace TextChunker.Embeddings;
 
 /// <summary>
-/// Дисковый кэш эмбеддингов: <c>&lt;root&gt;/&lt;scope&gt;/&lt;sha256&gt;.bin</c>, где scope —
-/// модель/провайдер, а хеш считается от <c>model \0 prompt \0 text</c>.
-/// Формат записи: магия <c>TCEM1</c>, int32 размерность (LE), затем float32[] (LE).
-/// Запись атомарная (`.tmp` + <see cref="File.Move(string, string, bool)"/>), повреждённые
-/// записи удаляются и пересчитываются.
+/// Disk embedding cache: <c>&lt;root&gt;/&lt;scope&gt;/&lt;sha256&gt;.bin</c>, where scope is
+/// the model/provider and the hash is computed from <c>model \0 prompt \0 text</c>.
+/// Record format: the magic <c>TCEM1</c>, int32 dimensions (LE), then float32[] (LE).
+/// Writing is atomic (`.tmp` + <see cref="File.Move(string, string, bool)"/>); corrupted
+/// records are deleted and recomputed.
 /// </summary>
 public sealed class EmbeddingCache
 {
@@ -29,11 +29,11 @@ public sealed class EmbeddingCache
         _scopeDir = Path.Combine(root, Sanitize(_model));
     }
 
-    /// <summary>Корень кэша: явный каталог или LocalApplicationData/TextChunker/embeddings.</summary>
+    /// <summary>Cache root: an explicit directory or LocalApplicationData/TextChunker/embeddings.</summary>
     public static string ResolveRoot(string? cacheDir)
         => string.IsNullOrWhiteSpace(cacheDir) ? DefaultRoot() : cacheDir!.Trim();
 
-    /// <summary>Каталог кэша по умолчанию: LocalApplicationData/TextChunker/embeddings.</summary>
+    /// <summary>Default cache directory: LocalApplicationData/TextChunker/embeddings.</summary>
     public static string DefaultRoot()
     {
         string baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -41,10 +41,10 @@ public sealed class EmbeddingCache
         return Path.Combine(baseDir, "TextChunker", "embeddings");
     }
 
-    /// <summary>Каталог области кэша (модель/провайдер), null — кэш недоступен.</summary>
+    /// <summary>Cache scope directory (model/provider); null — the cache is unavailable.</summary>
     public string? ScopeDirectory => _scopeDir;
 
-    /// <summary>Путь файла кэша для текста.</summary>
+    /// <summary>Path of the cache file for a text.</summary>
     public string GetPath(string text)
     {
         if (_scopeDir is null)
@@ -54,7 +54,7 @@ public sealed class EmbeddingCache
         return Path.Combine(_scopeDir, Hash(text) + ".bin");
     }
 
-    /// <summary>Прочитать вектор; false — промах или запись повреждена (тогда файл удаляется).</summary>
+    /// <summary>Read a vector; false — a miss or a corrupted record (the file is then deleted).</summary>
     public bool TryGet(string text, out float[] vector)
     {
         vector = Array.Empty<float>();
@@ -106,13 +106,13 @@ public sealed class EmbeddingCache
         }
         catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
         {
-            // Повреждённая/недоступная запись: удаляем и считаем промахом (будет перезаписана).
+            // Corrupted/unavailable record: delete it and treat it as a miss (it will be rewritten).
             TryDelete(path);
             return false;
         }
     }
 
-    /// <summary>Записать вектор. Ошибки ввода-вывода не прерывают нарезку — запись молча отбрасывается.</summary>
+    /// <summary>Write a vector. I/O errors do not interrupt chunking — the record is silently discarded.</summary>
     public void Set(string text, float[] vector)
     {
         if (_scopeDir is null || vector is null || vector.Length == 0)
@@ -147,7 +147,7 @@ public sealed class EmbeddingCache
         }
     }
 
-    /// <summary>Хеш ключа кэша (model \0 prompt \0 text), нижний регистр hex.</summary>
+    /// <summary>Hash of the cache key (model \0 prompt \0 text), lowercase hex.</summary>
     public string Hash(string text)
     {
         byte[] key = Encoding.UTF8.GetBytes($"{_model}\u0000{_prompt}\u0000{text}");
@@ -160,7 +160,7 @@ public sealed class EmbeddingCache
         return builder.ToString();
     }
 
-    /// <summary>Пакетное чтение: null — промах по индексу.</summary>
+    /// <summary>Batch read: null — a miss for that index.</summary>
     public float[]?[] GetMany(IReadOnlyList<string> texts)
     {
         var results = new float[]?[texts.Count];

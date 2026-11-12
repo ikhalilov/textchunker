@@ -1,15 +1,15 @@
 namespace TextChunker.Abstractions.Embeddings;
 
 /// <summary>
-/// Провайдер, который умеет сообщать статистику попаданий в кэш эмбеддингов.
-/// Реализуется декоратором <c>CachedEmbeddingProvider</c>; планировщик пробрасывает
-/// значения в <c>ChunkingStats</c> для диагностики стоимости прогона.
+/// A provider that can report hit statistics for the embedding cache.
+/// Implemented by the <c>CachedEmbeddingProvider</c> decorator; the scheduler passes the
+/// values into <c>ChunkingStats</c> for diagnostics of the run's cost.
 /// </summary>
 public interface IEmbeddingCacheStats
 {
-    /// <summary>Сколько атомов обслужено из кэша.</summary>
+    /// <summary>How many atoms were served from the cache.</summary>
     long CacheHits { get; }
 
-    /// <summary>Сколько атомов пришлось вычислять заново.</summary>
+    /// <summary>How many atoms had to be recomputed.</summary>
     long CacheMisses { get; }
 }

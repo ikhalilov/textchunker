@@ -6,12 +6,12 @@ using TextChunker.Tokenizers;
 
 namespace TextChunker.Tests;
 
-/// <summary>Группировка атомов в чанки по семантическим границам.</summary>
+/// <summary>Grouping atoms into chunks by semantic boundaries.</summary>
 public sealed class SemanticChunkerTests
 {
     private static readonly WordTokenizer Tokenizer = new();
 
-    /// <summary>План: 6 предложений, граница перед атомом 3.</summary>
+    /// <summary>Plan: 6 sentences, a boundary before atom 3.</summary>
     private static SemanticPlan Plan(string text, params int[] breakpoints)
     {
         IReadOnlyList<SemanticAtom> atoms = SemanticAtomizer.Atomize(
@@ -80,7 +80,7 @@ public sealed class SemanticChunkerTests
             Assert.True(Tokenizer.CountTokens(segment.Text) <= 5);
         }
 
-        // Рез выровнен на пробел: обрывков слов нет (все куски начинаются с «word»).
+        // The cut is aligned to a space: there are no word fragments (all pieces start with "word").
         Assert.All(split.Segments, segment => Assert.StartsWith("word", segment.Text, StringComparison.Ordinal));
         Assert.Equal(text.Replace(" ", string.Empty), string.Concat(split.Segments.Select(s => s.Text)).Replace(" ", string.Empty));
     }
@@ -109,7 +109,7 @@ public sealed class SemanticChunkerTests
         ChunkSplit split = Run(text, Plan(text, new[] { 3 }.ToArray()), options);
 
         Assert.Equal(2, split.Segments.Count);
-        // Хвост первого чанка («Two. Three.») повторяется в начале второго.
+        // The tail of the first chunk ("Two. Three.") is repeated at the start of the second.
         Assert.Equal("One. Two. Three.", split.Segments[0].Text);
         Assert.StartsWith("Two.", split.Segments[1].Text, StringComparison.Ordinal);
         Assert.Contains("Six.", split.Segments[1].Text, StringComparison.Ordinal);
@@ -158,7 +158,7 @@ public sealed class SemanticChunkerTests
     }
 }
 
-/// <summary>Сервис: document-mode, лимит объёма, метаданные, откат на recursive.</summary>
+/// <summary>Service: document mode, size limit, metadata, fallback to recursive.</summary>
 public sealed class SemanticServiceTests
 {
     private static readonly WordTokenizer Tokenizer = new();

@@ -9,10 +9,10 @@ using TextChunker.Tokenizers;
 namespace TextChunker.Tools.SemanticCalibration;
 
 /// <summary>
-/// Считает boundary F1 для семантической нарезки на размеченном корпусе.
-/// Для каждого документа рядом лежит <c>*.json</c> с подстроками, которые начинают
-/// новый смысловой сегмент. Инструмент перебирает перцентили и окна и печатает
-/// таблицу precision/recall/F1, чтобы калибровать дефолты.
+/// Computes boundary F1 for semantic chunking on a labeled corpus.
+/// Each document has a nearby <c>*.json</c> with substrings that start a
+/// new semantic segment. The tool sweeps percentiles and windows and prints
+/// a precision/recall/F1 table so the defaults can be calibrated.
 /// </summary>
 internal static class Program
 {
@@ -213,7 +213,7 @@ internal static class Program
         return [.. indexes];
     }
 
-    /// <summary>Жадное сопоставление с допуском: каждая истинная граница ищет свободное предсказание.</summary>
+    /// <summary>Greedy matching with a tolerance: each true boundary looks for an unused prediction.</summary>
     private static Counters Count(int[] truth, int[] predicted)
     {
         var used = new bool[predicted.Length];

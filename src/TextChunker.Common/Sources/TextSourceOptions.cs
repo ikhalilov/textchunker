@@ -1,19 +1,19 @@
 namespace TextChunker.Sources;
 
-/// <summary>Опции источника текста: кодировка, режим невалидного UTF-8, нормализация.</summary>
+/// <summary>Text source options: encoding, invalid UTF-8 mode, normalization.</summary>
 public sealed class TextSourceOptions
 {
-    /// <summary>Имя кодировки: "utf-8", "windows-1251", "latin1" и т.п. null → UTF-8.</summary>
+    /// <summary>Encoding name: "utf-8", "windows-1251", "latin1", etc. null → UTF-8.</summary>
     public string? EncodingName { get; init; } = "utf-8";
 
-    /// <summary>true → строгий: невалидная последовательность = ошибка (exit 4). false → U+FFFD.</summary>
+    /// <summary>true → strict: an invalid sequence is an error (exit 4). false → U+FFFD.</summary>
     public bool InvalidAsError { get; init; }
 
     public bool NormalizeNfc { get; init; }
     public bool NormalizeNfkc { get; init; }
-    /// <summary>Нормализация line-конецников в LF.</summary>
+    /// <summary>Normalization of line endings to LF.</summary>
     public bool NormalizeLineEndings { get; init; }
-    /// <summary>Объединение многократных пробелов/табов внутри строки в один.</summary>
+    /// <summary>Collapsing multiple spaces/tabs within a line into one.</summary>
     public bool NormalizeWhitespace { get; init; }
 
     public bool AnyNormalization => NormalizeNfc || NormalizeNfkc || NormalizeLineEndings || NormalizeWhitespace;

@@ -1,14 +1,14 @@
 namespace TextChunker.Abstractions.Embeddings;
 
 /// <summary>
-/// Документ больше лимита семантического режима, а <c>--semantic-fallback error</c>
-/// запрещает тихий откат. CLI: exit 2; API: HTTP 413.
+/// The document exceeds the semantic mode limit, and <c>--semantic-fallback error</c>
+/// forbids a silent fallback. CLI: exit 2; API: HTTP 413.
 /// </summary>
 public sealed class SemanticLimitExceededException(string message) : Exception(message)
 {
-    /// <summary>Код завершения CLI.</summary>
+    /// <summary>CLI exit code.</summary>
     public int ExitCode => 2;
 
-    /// <summary>HTTP-статус для API.</summary>
+    /// <summary>HTTP status for the API.</summary>
     public int StatusCode => 413;
 }

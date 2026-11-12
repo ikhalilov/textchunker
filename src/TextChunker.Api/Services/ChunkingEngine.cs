@@ -10,9 +10,9 @@ using TextChunker.Embeddings;
 namespace TextChunker.Api.Services;
 
 /// <summary>
-/// Собирает конвейер нарезки для HTTP-запроса: валидация, токенизатор (с кэшем),
-/// стратегия, in-memory источник и сервис. Ошибки домена транслируются в HTTP-коды
-/// через <see cref="ApiErrors"/>.
+/// Assembles the chunking pipeline for an HTTP request: validation, tokenizer (with cache),
+/// strategy, in-memory source, and service. Domain errors are translated into HTTP codes
+/// via <see cref="ApiErrors"/>.
 /// </summary>
 public sealed class ChunkingEngine(
     TokenizerCache tokenizers,
@@ -21,9 +21,9 @@ public sealed class ChunkingEngine(
     private readonly TokenizerCache _tokenizers = tokenizers;
     private readonly IOptionsMonitor<ApiOptions> _options = options;
 
-    /// <summary>Создаёт сессию нарезки для HTTP-запроса.</summary>
-    /// <param name="request">Параметры запроса.</param>
-    /// <returns>Сессия с сервисом нарезки и in-memory источником.</returns>
+    /// <summary>Creates a chunking session for an HTTP request.</summary>
+    /// <param name="request">The request parameters.</param>
+    /// <returns>A session with the chunking service and the in-memory source.</returns>
     public ChunkSession CreateSession(ChunkRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -81,20 +81,20 @@ public sealed class ChunkingEngine(
         return new ChunkSession(service, source);
     }
 
-    /// <summary>Выполняет нарезку по параметрам запроса.</summary>
-    /// <param name="request">Параметры запроса.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns>Чанки и агрегированная статистика.</returns>
+    /// <summary>Chunks according to the request parameters.</summary>
+    /// <param name="request">The request parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The chunks and aggregated statistics.</returns>
     public async Task<ChunkResult> RunAsync(ChunkRequest request, CancellationToken cancellationToken)
     {
         ChunkSession session = CreateSession(request);
         return await RunAsync(session, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Нарезка по уже созданной сессии (нужно streaming-эндпоинту).</summary>
-    /// <param name="session">Сессия нарезки.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns>Чанки и агрегированная статистика.</returns>
+    /// <summary>Chunking over an already created session (needed by the streaming endpoint).</summary>
+    /// <param name="session">The chunking session.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The chunks and aggregated statistics.</returns>
     public async Task<ChunkResult> RunAsync(ChunkSession session, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -106,7 +106,7 @@ public sealed class ChunkingEngine(
         return new ChunkResult(writer.Chunks, stats);
     }
 
-    /// <summary>Планировщик границ — только для strategy = "semantic".</summary>
+    /// <summary>The boundary planner — only for strategy = "semantic".</summary>
     private static ISemanticPlanner? CreatePlanner(ChunkRequest request)
     {
         if (!ChunkerFactory.RequiresEmbeddings(request.Strategy))
@@ -167,7 +167,7 @@ public sealed class ChunkingEngine(
         int? maxTokens = request.MaxTokens;
         if (maxTokens is null && request.MaxChars is null && request.MaxWords is null && request.MaxBytes is null)
         {
-            maxTokens = 512; // тот же дефолт, что и в CLI
+            maxTokens = 512; // same default as in the CLI
         }
 
         return new ChunkingOptions(

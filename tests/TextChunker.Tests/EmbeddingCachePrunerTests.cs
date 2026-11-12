@@ -3,7 +3,7 @@ using TextChunker.Embeddings;
 
 namespace TextChunker.Tests;
 
-/// <summary>Обслуживание дискового кэша: TTL, лимит размера, dry-run, старые .tmp.</summary>
+/// <summary>Disk cache maintenance: TTL, size limit, dry run, stale .tmp files.</summary>
 public sealed class EmbeddingCachePrunerTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -5,12 +5,12 @@ using TextChunker.Tokenizers;
 namespace TextChunker.Tests;
 
 /// <summary>
-/// Тесты модельного токенизатора `huggingface` (BPE, `tokenizer.json`).
-/// Эталонные значения зафиксированы пробником `ModelCheck` на `google/embeddinggemma-2`:
-/// пробел не является отдельным токеном, несколько пробелов схлопываются,
-/// CJK считается через byte fallback (3 байта = 3 токена), `GetIndexByTokenCount`
-/// 1-based (n == count → длина текста).
-/// Тесты с моделью пропускаются, если `tokenizer.json` отсутствует в checkout.
+/// Tests for the `huggingface` model tokenizer (BPE, `tokenizer.json`).
+/// The reference values were recorded by the `ModelCheck` probe on `google/embeddinggemma-2`:
+/// a space is not a separate token, multiple spaces are collapsed,
+/// CJK is counted via byte fallback (3 bytes = 3 tokens), and `GetIndexByTokenCount`
+/// is 1-based (n == count → the length of the text).
+/// Model-dependent tests are skipped if `tokenizer.json` is absent from the checkout.
 /// </summary>
 public sealed class HuggingFaceTokenizerTests
 {
@@ -58,7 +58,7 @@ public sealed class HuggingFaceTokenizerTests
         Assert.Equal(2, tok.CountTokens("hello\tworld"));
         Assert.Equal(2, tok.CountTokens("Hello World"));
         Assert.Equal(2, tok.CountTokens("one\n\n two"));
-        // CJK через byte fallback: 3 символа * 3 байта = 9 токенов.
+        // CJK via byte fallback: 3 characters * 3 bytes = 9 tokens.
         Assert.Equal(9, tok.CountTokens("\u65E5\u672C\u8A9E"));
     }
 
@@ -94,7 +94,7 @@ public sealed class HuggingFaceTokenizerTests
         HuggingFaceTokenizer? tok = Shared.Value;
         if (tok is null) return;
 
-        // BPE: "hello wor"(2) + "ld"(1) не аддитивны; итог "hello world" = 2 токена.
+        // BPE: "hello wor"(2) + "ld"(1) are not additive; the total for "hello world" = 2 tokens.
         int parts = tok.CountTokens("hello wor") + tok.CountTokens("ld");
         int combined = ChunkTokenCount.ForFinalChunk(tok, "ld", "hello wor");
         Assert.Equal(tok.CountTokens("hello world"), combined);

@@ -6,15 +6,15 @@ using Scalar.AspNetCore;
 
 namespace TextChunker.Api.Services;
 
-/// <summary>Подключение встроенного OpenAPI (Microsoft.AspNetCore.OpenApi) и Scalar UI.</summary>
+/// <summary>Wiring up the built-in OpenAPI (Microsoft.AspNetCore.OpenApi) and the Scalar UI.</summary>
 public static class ApiDocsExtensions
 {
     public const string DocumentName = "v1";
 
     private const string Description =
-        "Нарезка текста на чанки для RAG: стратегии `fixed`, `recursive`, `paragraph` и `semantic`, " +
-        "токенизаторы, лимиты, `--prefix`, перекрытие, кодировки. Ответы — JSON или NDJSON; " +
-        "ошибки — `application/problem+json`.";
+        "Text chunking for RAG: `fixed`, `recursive`, `paragraph` and `semantic` strategies, " +
+        "tokenizers, limits, `--prefix`, overlap, encodings. Responses are JSON or NDJSON; " +
+        "errors are `application/problem+json`.";
 
     public static IServiceCollection AddApiDocs(this IServiceCollection services, IConfiguration configuration)
     {
@@ -43,7 +43,7 @@ public static class ApiDocsExtensions
         return services;
     }
 
-    /// <summary>Публикует OpenAPI и Scalar; при <c>ApiDocs:Enabled=false</c> ничего не регистрирует.</summary>
+    /// <summary>Publishes OpenAPI and Scalar; when <c>ApiDocs:Enabled=false</c>, registers nothing.</summary>
     public static WebApplication MapApiDocs(this WebApplication app)
     {
         ApiDocsOptions options = app.Configuration.GetSection("ApiDocs").Get<ApiDocsOptions>() ?? new ApiDocsOptions();
@@ -68,7 +68,7 @@ public static class ApiDocsExtensions
                 .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
         });
 
-        // Корень удобнее перенаправить в документацию, чем отдавать 404.
+        // The root is better redirected to the documentation than answered with a 404.
         app.MapGet("/", () => Results.Redirect(options.Route))
             .ExcludeFromDescription();
 

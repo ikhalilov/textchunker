@@ -8,9 +8,9 @@ using TextChunker.Tokenizers;
 namespace TextChunker.Tests;
 
 /// <summary>
-/// Интеграция с живым llama.cpp. Включается переменной окружения
-/// <c>TEXTCHUNKER_LLAMA_CPP_URL</c> (например, <c>http://127.0.0.1:9932</c>);
-/// без неё тесты пропускаются, поэтому CI работает без сервера.
+/// Integration with a live llama.cpp. Enabled by the environment variable
+/// <c>TEXTCHUNKER_LLAMA_CPP_URL</c> (for example, <c>http://127.0.0.1:9932</c>);
+/// without it the tests are skipped, so CI runs without a server.
 /// </summary>
 public sealed class LlamaCppSemanticIntegrationTests
 {

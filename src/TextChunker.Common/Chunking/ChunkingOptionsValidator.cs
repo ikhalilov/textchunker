@@ -2,7 +2,7 @@ using TextChunker.Abstractions;
 
 namespace TextChunker.Chunking;
 
-/// <summary>Валидация параметров нарезки (невалидные значения → ArgumentException, CLI: exit 2).</summary>
+/// <summary>Validation of chunking parameters (invalid values → ArgumentException, CLI: exit 2).</summary>
 public static class ChunkingOptionsValidator
 {
     public static void Validate(ChunkingOptions options)

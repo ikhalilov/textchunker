@@ -1,66 +1,66 @@
 namespace TextChunker.Abstractions.Embeddings;
 
 /// <summary>
-/// Параметры провайдера эмбеддингов. Значения по умолчанию соответствуют локальному
-/// llama.cpp-серверу с <c>embeddinggemma-2</c> (см. docs/semantic-chunking.md).
+/// Embedding provider settings. The defaults match a local llama.cpp server with
+/// <c>embeddinggemma-2</c> (see docs/semantic-chunking.md).
 /// </summary>
 public sealed record EmbeddingOptions
 {
-    /// <summary>Провайдер: <c>llama-cpp</c> | <c>hash</c>.</summary>
+    /// <summary>Provider: <c>llama-cpp</c> | <c>hash</c>.</summary>
     public string Provider { get; init; } = "llama-cpp";
 
-    /// <summary>Базовый URL сервера эмбеддингов (используется только для <c>llama-cpp</c>).</summary>
+    /// <summary>Base URL of the embeddings server (used only for <c>llama-cpp</c>).</summary>
     public string Endpoint { get; init; } = "http://127.0.0.1:9932";
 
-    /// <summary>Имя модели в запросе; null/пусто — поле <c>model</c> не отправляется.</summary>
+    /// <summary>Model name sent in requests; null/empty means the <c>model</c> field is not sent.</summary>
     public string? Model { get; init; }
 
-    /// <summary>Ожидаемая размерность векторов (0 — не проверять).</summary>
+    /// <summary>Expected vector dimension (0 — do not validate).</summary>
     public int Dimensions { get; init; } = 768;
 
-    /// <summary>Размер батча при обращении к серверу.</summary>
+    /// <summary>Batch size for server requests.</summary>
     public int BatchSize { get; init; } = 32;
 
     /// <summary>
-    /// Символьный бюджет батча (консервативная оценка токенов): батч закрывается,
-    /// когда суммарная длина текстов превышает лимит. 0 — ограничивать только BatchSize.
+    /// Character budget per batch (a conservative token estimate): the batch is closed
+    /// once the combined text length exceeds the limit. 0 — limit by BatchSize only.
     /// </summary>
     public int MaxBatchChars { get; init; } = 8_000;
 
     /// <summary>
-    /// Сколько батчей отправлять параллельно (1 — последовательно).
-    /// Имеет смысл при сервере с несколькими слотами (<c>--parallel N</c>).
+    /// How many batches to send in parallel (1 — sequential).
+    /// Useful with a server that has several slots (<c>--parallel N</c>).
     /// </summary>
     public int Concurrency { get; init; } = 1;
 
-    /// <summary>Префикс-промпт к каждому тексту (null — без промпта). Входит в ключ кэша.</summary>
+    /// <summary>Prefix prompt prepended to each text (null — no prompt). Included in the cache key.</summary>
     public string? Prompt { get; init; }
 
-    /// <summary>Каталог кэша эмбеддингов; null — путь по умолчанию.</summary>
+    /// <summary>Embedding cache directory; null — the default path.</summary>
     public string? CacheDir { get; init; }
 
-    /// <summary>false — отключить дисковый кэш.</summary>
+    /// <summary>false — disable the on-disk cache.</summary>
     public bool UseCache { get; init; } = true;
 
-    /// <summary>Максимальный размер кэша в байтах; null — без лимита.</summary>
+    /// <summary>Maximum cache size in bytes; null — no limit.</summary>
     public long? CacheMaxBytes { get; init; }
 
-    /// <summary>Удалять записи кэша старше N дней; null — без TTL.</summary>
+    /// <summary>Delete cache entries older than N days; null — no TTL.</summary>
     public int? CacheTtlDays { get; init; }
 
-    /// <summary>Таймаут HTTP-запроса.</summary>
+    /// <summary>HTTP request timeout.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(120);
 
-    /// <summary>Число повторных попыток на сетевые ошибки и 429/5xx.</summary>
+    /// <summary>Number of retries on network errors and 429/5xx.</summary>
     public int MaxRetries { get; init; } = 3;
 
     /// <summary>
-    /// API-ключ. Заполняется фабрикой из переменной окружения — из тела запроса
-    /// (CLI/API) ключ никогда не принимается.
+    /// API key. Populated by the factory from an environment variable; the key is never
+    /// accepted from the request body (CLI/API).
     /// </summary>
     public string? ApiKey { get; init; }
 
-    /// <summary>Проверить согласованность параметров (невалидные значения → ArgumentException, exit 2 / 400).</summary>
+    /// <summary>Validate parameter consistency (invalid values → ArgumentException, exit 2 / 400).</summary>
     public void Validate()
     {
         if (string.IsNullOrWhiteSpace(Provider))

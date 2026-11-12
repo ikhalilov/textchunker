@@ -1,6 +1,6 @@
 namespace TextChunker.Abstractions;
 
-/// <summary>Настройки нарезки. Одна единица измерения активна по max-* параметру.</summary>
+/// <summary>Chunking settings. A single unit of measure is active, determined by the max-* parameter.</summary>
 public sealed record ChunkingOptions
 {
     /// <summary>`fixed`, `recursive`, `paragraph` (MVP).</summary>
@@ -9,7 +9,7 @@ public sealed record ChunkingOptions
     public int? MaxTokens { get; init; }
     public int? MaxChars { get; init; }
     public int? MaxWords { get; init; }
-    /// <summary>Опциональная единица — байты (сетевые/бинарные лимиты).</summary>
+    /// <summary>Optional unit: bytes (network/binary limits).</summary>
     public int? MaxBytes { get; init; }
 
     public int? MinTokens { get; init; }
@@ -19,16 +19,16 @@ public sealed record ChunkingOptions
     public int? OverlapTokens { get; init; }
     public int? OverlapChars { get; init; }
 
-    /// <summary>Обрезка пробелов по краям чанка (включено по умолчанию).</summary>
+    /// <summary>Trim whitespace at chunk edges (enabled by default).</summary>
     public bool Trim { get; init; } = true;
 
-    /// <summary>Отбросить последний чанк, меньший min, без объединения с предыдущим.</summary>
+    /// <summary>Drop the final chunk if it is smaller than min, without merging it into the previous one.</summary>
     public bool DropSmall { get; init; }
 
-    /// <summary>Task-префикс, учитываемый в лимите: tokenCount(prefix + chunk) &lt;= max-tokens.</summary>
+    /// <summary>Task prefix counted toward the limit: tokenCount(prefix + chunk) &lt;= max-tokens.</summary>
     public string? Prefix { get; init; }
 
-    /// <summary>Иерархические разделители `recursive`, от крупного к мелкому. Пустая строка = жёсткая разбивка.</summary>
+    /// <summary>Hierarchical `recursive` separators, from coarse to fine. An empty string means a hard split.</summary>
     public IReadOnlyList<string> Separators { get; init; } = DefaultSeparators;
 
     public static readonly IReadOnlyList<string> DefaultSeparators = [
@@ -38,13 +38,13 @@ public sealed record ChunkingOptions
     public SizeUnit Unit { get; }
     public int? MaxSize { get; }
 
-    /// <summary>Активная единица измерения по max-* (priority: tokens > chars > words > bytes).</summary>
+    /// <summary>Active unit of measure derived from max-* (priority: tokens > chars > words > bytes).</summary>
     static SizeUnit DetermineUnit(ChunkingOptions o) =>
         o.MaxTokens is { } t ? SizeUnit.Tokens :
         o.MaxChars is { } c ? SizeUnit.Chars :
         o.MaxWords is { } w ? SizeUnit.Words :
         o.MaxBytes is { } b ? SizeUnit.Bytes :
-        SizeUnit.Tokens; // default для recursive/paragraph без явного max — tokens (fallback: word/char)
+        SizeUnit.Tokens; // default for recursive/paragraph without an explicit max: tokens (fallback: word/char)
 
     public ChunkingOptions(
         string? strategy = null,

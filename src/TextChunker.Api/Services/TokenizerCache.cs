@@ -5,9 +5,9 @@ using TextChunker.Tokenizers;
 namespace TextChunker.Api.Services;
 
 /// <summary>
-/// Кэш созданных токенизаторов (singleton). Загрузка HF-модели занимает
-/// ~2 с и сотни МБ, поэтому повторные запросы переиспользуют экземпляр.
-/// Ключ — (имя, модель/путь, cacheDir).
+/// Cache of created tokenizers (singleton). Loading an HF model takes
+/// ~2 s and hundreds of MB, so repeated requests reuse the instance.
+/// The key is (name, model/path, cacheDir).
 /// </summary>
 public sealed class TokenizerCache
 {
@@ -30,7 +30,7 @@ public sealed class TokenizerCache
         }
         catch
         {
-            // Не кэшируем неудачную загрузку: следующий запрос может успеть (сеть/кэш).
+            // Do not cache a failed load: the next request may succeed (network/cache).
             _cache.TryRemove(key, out _);
             throw;
         }

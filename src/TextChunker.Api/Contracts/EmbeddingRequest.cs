@@ -1,78 +1,78 @@
 namespace TextChunker.Api.Contracts;
 
 /// <summary>
-/// Параметры эмбеддингов для <c>strategy = "semantic"</c>. API-ключ здесь не принимается:
-/// он читается только из переменной окружения на сервере.
+/// Embedding parameters for <c>strategy = "semantic"</c>. An API key is not accepted here:
+/// it is read only from the server environment variable.
 /// </summary>
 public sealed record EmbeddingRequest
 {
-    /// <summary>llama-cpp | hash (по умолчанию llama-cpp).</summary>
+    /// <summary>llama-cpp | hash (default: llama-cpp).</summary>
     public string? Provider { get; init; }
 
-    /// <summary>URL сервера эмбеддингов (по умолчанию http://127.0.0.1:9932).</summary>
+    /// <summary>Embedding server URL (default: http://127.0.0.1:9932).</summary>
     public string? Endpoint { get; init; }
 
-    /// <summary>Имя модели в запросе к серверу эмбеддингов.</summary>
+    /// <summary>Model name sent to the embedding server.</summary>
     public string? Model { get; init; }
 
-    /// <summary>Размер батча эмбеддингов (по умолчанию 32).</summary>
+    /// <summary>Embedding batch size (default: 32).</summary>
     public int? BatchSize { get; init; }
 
-    /// <summary>Символьный бюджет батча (консервативная оценка токенов; 0 — без ограничения).</summary>
+    /// <summary>Batch character budget (conservative token estimate; 0 — no limit).</summary>
     public int? MaxBatchChars { get; init; }
 
-    /// <summary>Сколько батчей отправлять параллельно (1 — последовательно).</summary>
+    /// <summary>How many batches to send in parallel (1 — sequential).</summary>
     public int? Concurrency { get; init; }
 
-    /// <summary>Таймаут HTTP-запроса к серверу, секунды (по умолчанию 120).</summary>
+    /// <summary>HTTP timeout for server requests, seconds (default: 120).</summary>
     public int? TimeoutSeconds { get; init; }
 
-    /// <summary>Повторы на сетевые ошибки и 429/5xx (по умолчанию 3).</summary>
+    /// <summary>Retries for network errors and 429/5xx (default: 3).</summary>
     public int? MaxRetries { get; init; }
 
-    /// <summary>Префикс-промпт, добавляемый к каждому атому перед эмбеддингом.</summary>
+    /// <summary>Prefix prompt added to each atom before embedding.</summary>
     public string? Prompt { get; init; }
 
-    /// <summary>Каталог кэша эмбеддингов (по умолчанию LocalApplicationData/TextChunker/embeddings).</summary>
+    /// <summary>Embedding cache directory (default: LocalApplicationData/TextChunker/embeddings).</summary>
     public string? CacheDir { get; init; }
 
-    /// <summary>Использовать дисковый кэш эмбеддингов (по умолчанию true).</summary>
+    /// <summary>Use the on-disk embedding cache (default: true).</summary>
     public bool? UseCache { get; init; }
 
-    /// <summary>Ожидаемая размерность векторов (по умолчанию 768; 0 — не проверять).</summary>
+    /// <summary>Expected vector dimension (default: 768; 0 — do not validate).</summary>
     public int? Dimensions { get; init; }
 }
 
-/// <summary>Параметры семантической нарезки.</summary>
+/// <summary>Semantic chunking parameters.</summary>
 public sealed record SemanticRequest
 {
-    /// <summary>Перцентиль расстояний 1 − cos для границ, (0, 1] (по умолчанию 0.90).</summary>
+    /// <summary>Percentile of 1 − cos distances used for boundaries, (0, 1] (default: 0.90).</summary>
     public double? Percentile { get; init; }
 
-    /// <summary>Минимальная дистанция границы (по умолчанию 0.02).</summary>
+    /// <summary>Minimum boundary distance (default: 0.02).</summary>
     public double? MinDistance { get; init; }
 
-    /// <summary>Окно TextTiling: 1 — соседние атомы (по умолчанию 1).</summary>
+    /// <summary>TextTiling window: 1 — adjacent atoms (default: 1).</summary>
     public int? Window { get; init; }
 
-    /// <summary>Лимит объёма входа в document-mode, байт (по умолчанию 20000000).</summary>
+    /// <summary>Input size limit in document mode, bytes (default: 20000000).</summary>
     public long? MaxBytes { get; init; }
 
-    /// <summary>Размер окна streaming-режима в байтах (по умолчанию 4000000).</summary>
+    /// <summary>Streaming-mode window size in bytes (default: 4000000).</summary>
     public int? StreamWindowBytes { get; init; }
 
-    /// <summary>Перекрытие соседних streaming-окон в байтах (по умолчанию 256000).</summary>
+    /// <summary>Overlap between adjacent streaming windows in bytes (default: 256000).</summary>
     public int? StreamOverlapBytes { get; init; }
 
     /// <summary>
-    /// Поведение при превышении <c>maxBytes</c>: <c>recursive</c> — откат, <c>error</c> — 413,
-    /// <c>streaming</c> — оконная обработка (по умолчанию recursive).
+    /// Behavior when <c>maxBytes</c> is exceeded: <c>recursive</c> — fall back, <c>error</c> — 413,
+    /// <c>streaming</c> — windowed processing (default: recursive).
     /// </summary>
     public string? Fallback { get; init; }
 
-    /// <summary>Склейка атомов короче N символов (по умолчанию 20).</summary>
+    /// <summary>Merge atoms shorter than N characters (default: 20).</summary>
     public int? MinAtomChars { get; init; }
 
-    /// <summary>Предварительное дробление атомов длиннее N токенов (по умолчанию 512).</summary>
+    /// <summary>Pre-split atoms longer than N tokens (default: 512).</summary>
     public int? MaxAtomTokens { get; init; }
 }

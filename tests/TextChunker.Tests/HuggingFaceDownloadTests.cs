@@ -6,9 +6,9 @@ using TextChunker.Tokenizers;
 namespace TextChunker.Tests;
 
 /// <summary>
-/// Проверка ветки первой загрузки HF-токенизатора: файл скачивается один раз в кэш,
-/// повторная загрузка идёт offline (без HTTP), ошибка скачивания → TokenizerLoadException (exit 5).
-/// HTTP подменяется fake handler'ом — реальная сеть не используется.
+/// Verification of the first-download path of the HF tokenizer: the file is downloaded once into the cache,
+/// a repeated load runs offline (without HTTP), a download error → TokenizerLoadException (exit 5).
+/// HTTP is replaced by a fake handler — the real network is not used.
 /// </summary>
 public sealed class HuggingFaceDownloadTests
 {

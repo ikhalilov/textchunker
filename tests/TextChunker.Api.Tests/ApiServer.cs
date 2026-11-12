@@ -6,8 +6,8 @@ using System.Text;
 namespace TextChunker.Api.Tests;
 
 /// <summary>
-/// Поднимает реальный процесс ASP.NET Core (Kestrel) на свободном порту и даёт
-/// HttpClient для интеграционных тестов. Без Microsoft.AspNetCore.Mvc.Testing.
+/// Starts a real ASP.NET Core (Kestrel) process on a free port and provides
+/// an HttpClient for integration tests. Without Microsoft.AspNetCore.Mvc.Testing.
 /// </summary>
 public sealed class ApiServer : IAsyncDisposable
 {

@@ -102,7 +102,7 @@ curl -X POST http://localhost:5080/api/v1/chunk \
 - UI: `/scalar` (root `/` redirects to `/scalar`).
 - OpenAPI 3.2: `/openapi/v1.json` (built-in `Microsoft.AspNetCore.OpenApi`).
 - UI: [Scalar](https://scalar.com/); assets are served locally, no CDN.
-- The document is grouped under the OpenAPI tags `Справочники` and `Нарезка`,
+- The document is grouped under the OpenAPI tags `Reference` and `Chunking`,
   with summaries and schema descriptions taken from XML comments,
   `problem+json` for 400/401/413/415/503, and NDJSON for `/api/v1/chunk/stream`.
 - OpenAPI includes versioned routes under `/api/v1/...`.
@@ -124,7 +124,7 @@ start http://localhost:5080/scalar
 
 ```json
 {
-  "text": "Текст для нарезки…",
+  "text": "Text to chunk…",
   "strategy": "recursive",
   "tokenizer": "huggingface",
   "tokenizerModel": "google/embeddinggemma-2",

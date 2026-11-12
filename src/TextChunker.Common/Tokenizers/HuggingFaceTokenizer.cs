@@ -13,11 +13,11 @@ using TextChunker;
 using TextChunker.Abstractions;
 
 /// <summary>
-/// Модельный токенизатор <c>huggingface</c>: грузит <c>tokenizer.json</c> модели
-/// (по умолчанию <c>google/embeddinggemma-2</c>) и считает токены точным BPE-движком
-/// <c>Microsoft.ML.Tokenizers</c> (Rust <c>tokenizers</c> — тот же движок, что HF <c>transformers</c>,
-/// считывает тот же <c>tokenizer.json</c>). При первом использовании скачивает файл в кэш
-/// (<c>--tokenizer-cache-dir</c>), далее работает offline.
+/// The <c>huggingface</c> model tokenizer: loads the model's <c>tokenizer.json</c>
+/// (<c>google/embeddinggemma-2</c> by default) and counts tokens with the exact BPE engine of
+/// <c>Microsoft.ML.Tokenizers</c> (Rust <c>tokenizers</c> — the same engine as HF <c>transformers</c>,
+/// reading the same <c>tokenizer.json</c>). On first use it downloads the file into the cache
+/// (<c>--tokenizer-cache-dir</c>); afterwards it works offline.
 /// </summary>
 public sealed class HuggingFaceTokenizer : ITokenizer
 {
@@ -26,7 +26,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
     private readonly string _jsonPath;
     private readonly DateTime _loadedAt;
 
-    /// <summary>По умолчанию модель для <c>--tokenizer huggingface</c>.</summary>
+    /// <summary>Default model for <c>--tokenizer huggingface</c>.</summary>
     public const string DefaultModelName = "google/embeddinggemma-2";
 
     private const string HfBaseUrl = "https://huggingface.co";
@@ -42,7 +42,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
     {
     }
 
-    /// <summary>Тестируемая перегрузка: позволяет подменить HTTP-клиент (без сети).</summary>
+    /// <summary>Testable overload: allows the HTTP client to be substituted (no network).</summary>
     internal HuggingFaceTokenizer(string? model, string? cacheDir, HttpClient? httpClient)
     {
         _httpClient = httpClient ?? _httpClientSource.Get();
@@ -98,7 +98,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
         return _tokenizer.GetIndexByTokenCount(text, n, out _, out _, true, true);
     }
 
-    /// <summary>Каталог кэша по умолчанию: %LOCALAPPDATA%/TextChunker/tokenizers (cross-platform LocalApplicationData).</summary>
+    /// <summary>Default cache directory: %LOCALAPPDATA%/TextChunker/tokenizers (cross-platform LocalApplicationData).</summary>
     private static string ResolveDefaultCacheDir()
     {
         string baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -158,9 +158,9 @@ public sealed class HuggingFaceTokenizer : ITokenizer
         }
     }
 
-    /// <summary>Загрузка <c>tokenizer.json</c> в <c>BpeTokenizer</c>.
-    /// Поле-за-полем повторяет структуру HF <c>tokenizer.json</c>: <c>model.type=BPE</c>,
-    /// <c>vocab</c> как объект {токен: id}, <c>merges</c> как массив пар, <c>added_tokens</c> как special.
+    /// <summary>Loading <c>tokenizer.json</c> into <c>BpeTokenizer</c>.
+    /// It mirrors the structure of HF <c>tokenizer.json</c> field by field: <c>model.type=BPE</c>,
+    /// <c>vocab</c> as an object {token: id}, <c>merges</c> as an array of pairs, <c>added_tokens</c> as special.
     /// </summary>
     private static BpeTokenizer LoadBpeTokenizer(string jsonPath)
     {
@@ -222,7 +222,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
         return BpeTokenizer.Create(options);
     }
 
-    /// <summary>Обёртка <c>HttpClient</c> с общим timeout и lazy-созданием.</summary>
+    /// <summary><c>HttpClient</c> wrapper with a shared timeout and lazy creation.</summary>
     private sealed class HttpClientSource
     {
         private readonly Lazy<HttpClient> _lazy;

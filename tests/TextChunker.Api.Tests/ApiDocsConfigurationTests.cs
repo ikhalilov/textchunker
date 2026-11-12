@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace TextChunker.Api.Tests;
 
-/// <summary>Отключение и настройка документации через конфигурацию.</summary>
+/// <summary>Disabling and configuring documentation through configuration.</summary>
 public sealed class ApiDocsConfigurationTests
 {
     [Fact]

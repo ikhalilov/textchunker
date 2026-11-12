@@ -9,8 +9,8 @@ using TextChunker.Writers;
 namespace TextChunker.Tests;
 
 /// <summary>
-/// Сценарий "Interrupted run" (Ctrl+C): прерывание останавливает обработку,
-/// уже собранные чанки дописываются целиком, недописанных JSON-строк нет.
+/// "Interrupted run" scenario (Ctrl+C): cancellation stops processing,
+/// chunks already assembled are written out in full, and no partially written JSON lines remain.
 /// </summary>
 public sealed class CancellationTests
 {

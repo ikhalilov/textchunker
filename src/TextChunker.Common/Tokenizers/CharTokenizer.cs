@@ -3,12 +3,12 @@ namespace TextChunker.Tokenizers;
 using TextChunker.Abstractions;
 
 /// <summary>
-/// Токенизация по кодовым точкам (runes): пара суррогатов — 1 токен;
-/// эмодзи-цепочки (ZWJ/семьи, флаги, оттенки кожи) — 1 токен.
-/// Пустая строка — 0 токенов.
-/// <see cref="CutAtTokenBoundary"/> возвращает UTF-16 CharIndex начала
-/// <c>n</c>-го токена (0-based); если n == CountTokens(text) —
-/// возвращает длину текста (рез после всех токенов).
+/// Tokenization by code points (runes): a surrogate pair is 1 token;
+/// emoji sequences (ZWJ/families, flags, skin tones) are 1 token.
+/// An empty string is 0 tokens.
+/// <see cref="CutAtTokenBoundary"/> returns the UTF-16 CharIndex of the start of the
+/// <c>n</c>-th token (0-based); if n == CountTokens(text) —
+/// it returns the text length (a cut after all tokens).
 /// </summary>
 public sealed class CharTokenizer : ITokenizer
 {
@@ -27,7 +27,7 @@ public sealed class CharTokenizer : ITokenizer
             int cp = ReadCodePoint(text, i, out int len);
             if (started && ShouldJoin(prevEndCp, cp))
             {
-                // текущее cp входит в уже начатый токен — не увеличиваем счёт.
+                // the current cp joins the already started token — the count is not incremented.
             }
             else
             {
@@ -58,7 +58,7 @@ public sealed class CharTokenizer : ITokenizer
             return text.Length;
         }
 
-        // Найдём UTF-16 смещение начала n-го токена (0-based).
+        // Find the UTF-16 offset of the start of the n-th token (0-based).
         int unitIndex = 0;
         int i = 0;
         int unitStart = 0;
@@ -80,7 +80,7 @@ public sealed class CharTokenizer : ITokenizer
             }
             else
             {
-                // cp входит в текущий токен; граница не меняется.
+                // cp joins the current token; the boundary is unchanged.
             }
 
             started = true;
@@ -92,8 +92,8 @@ public sealed class CharTokenizer : ITokenizer
     }
 
     /// <summary>
-    /// Чтение одного кодового пункта: пара суррогатов → 1 (cp, len=2);
-    /// одинокий low-surrogate → (char, 1).
+    /// Reading a single code point: a surrogate pair → 1 (cp, len=2);
+    /// a lone low surrogate → (char, 1).
     /// </summary>
     private static int ReadCodePoint(string text, int i, out int len)
     {
@@ -111,25 +111,25 @@ public sealed class CharTokenizer : ITokenizer
 
     private static bool ShouldJoin(int prev, int cur)
     {
-        // 1. ZWJ (U+200D) всегда объединяет токены.
+        // 1. ZWJ (U+200D) always joins tokens.
         if (cur == 0x200D)
         {
             return true;
         }
 
-        // 2. Токен, следующий за ZWJ, входит в ту же цепочку.
+        // 2. The token following a ZWJ joins the same sequence.
         if (prev == 0x200D)
         {
             return true;
         }
 
-        // 3. Оттенки кожи (U+1F3FB..U+1F3FF) к эмодзи.
+        // 3. Skin tones (U+1F3FB..U+1F3FF) join an emoji.
         if (IsSkinTone(cur) && IsEmoji(prev))
         {
             return true;
         }
 
-        // 4. Флаг (regional indicator) к эмодзи/флагу.
+        // 4. A flag (regional indicator) joins an emoji/flag.
         if (IsFlag(cur) && (IsFlag(prev) || IsEmoji(prev)))
         {
             return true;

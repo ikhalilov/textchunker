@@ -2,12 +2,12 @@ using TextChunker.Abstractions.Embeddings;
 
 namespace TextChunker.Api.Services;
 
-/// <summary>Трансляция доменных исключений в RFC 7807 (application/problem+json).</summary>
+/// <summary>Translation of domain exceptions into RFC 7807 (application/problem+json).</summary>
 public static class ApiErrors
 {
-    /// <summary>Преобразует исключение в HTTP-ответ формата ProblemDetails.</summary>
-    /// <param name="exception">Исключение, возникшее при обработке запроса.</param>
-    /// <returns>HTTP-результат с соответствующим статусом.</returns>
+    /// <summary>Converts an exception into an HTTP response in the ProblemDetails format.</summary>
+    /// <param name="exception">The exception raised while processing the request.</param>
+    /// <returns>An HTTP result with the corresponding status.</returns>
     public static IResult ToResult(Exception exception)
     {
         return exception switch

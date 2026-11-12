@@ -6,20 +6,20 @@ using System.Collections.Generic;
 using TextChunker.Abstractions;
 
 /// <summary>
-/// Фабрика токенизаторов: сопоставляет имя из <c>--tokenizer</c> реализации <see cref="ITokenizer"/>.
-/// По умолчанию (имя не задано) — word-токенизатор с предупреждением в CLI о приблизительности.
+/// Tokenizer factory: maps the <c>--tokenizer</c> name to an <see cref="ITokenizer"/> implementation.
+/// By default (no name given) — the word tokenizer, with a CLI warning that it is approximate.
 /// </summary>
 public static class TokenizerFactory
 {
-    /// <summary>Имена, поддерживаемые параметром <c>--tokenizer</c>.</summary>
+    /// <summary>Names supported by the <c>--tokenizer</c> parameter.</summary>
     public static readonly IReadOnlyList<string> SupportedNames = new[]
     {
         "none", "char", "word", "regex", "huggingface"
     };
 
     /// <summary>
-    /// Создать токенизатор по имени. Неизвестное имя — <see cref="ArgumentOutOfRangeException"/>
-    /// (CLI переводит в exit code 2); ошибка загрузки модели — <see cref="TokenizerLoadException"/> (exit code 5).
+    /// Create a tokenizer by name. An unknown name yields <see cref="ArgumentOutOfRangeException"/>
+    /// (the CLI maps it to exit code 2); a model loading error yields <see cref="TokenizerLoadException"/> (exit code 5).
     /// </summary>
     public static ITokenizer Create(string? name, string? model = null, string? cacheDir = null)
     {
@@ -43,6 +43,6 @@ public static class TokenizerFactory
         };
     }
 
-    /// <summary>Токенизатор по умолчанию — word-based (приближённый).</summary>
+    /// <summary>Default tokenizer — word-based (approximate).</summary>
     public static ITokenizer CreateDefault() => new WordTokenizer();
 }

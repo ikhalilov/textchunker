@@ -5,11 +5,11 @@ using TextChunker.Sources;
 
 namespace TextChunker.Tests;
 
-/// <summary>Дымовые тесты слоя источников: BOM, смещения, UTF-8, кодировки, нормализация, коды ошибок.</summary>
+/// <summary>Smoke tests of the source layer: BOM, offsets, UTF-8, encodings, normalization, error codes.</summary>
 public sealed class SourceSmokeTests
 {
-    /// <summary>Корректный Unicode-лигатурный "fi" (U+FB01); NFKC расширяет до "fi".
-    /// Явный escape: литерал "ﬁ" при записи файла искажался (EF AC 81 вместо EF FB 81).</summary>
+    /// <summary>A valid Unicode ligature "fi" (U+FB01); NFKC expands it to "fi".
+    /// An explicit escape: the literal "ﬁ" was corrupted when the file was written (EF AC 81 instead of EF FB 81).</summary>
     private static readonly string LigFi = "\uFB01";
 
     private static string WriteTempPath(byte[] bytes)
@@ -112,7 +112,7 @@ public sealed class SourceSmokeTests
     [Fact]
     public void InvalidUtf8LenientModeReplacesWithReplacementChar()
     {
-        // A + 0x80 (invalid byte) + B — нет пробела в вводе.
+        // A + 0x80 (invalid byte) + B — there is no space in the input.
         string path = WriteTempPath([0x41, 0x80, 0x42]);
 
         {

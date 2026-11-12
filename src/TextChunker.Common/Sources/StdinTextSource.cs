@@ -3,9 +3,9 @@ using TextChunker.Abstractions;
 namespace TextChunker.Sources;
 
 /// <summary>
-/// Источник текста из stdin (pipe). Читает только когда stdin переопределён
-/// (pipe/file); интерактивный терминал без ввода — ошибка (exit 1),
-/// чтобы не блокировать.
+/// Text source from stdin (pipe). It reads only when stdin is redirected
+/// (pipe/file); an interactive terminal without input is an error (exit 1),
+/// so as not to block.
 /// </summary>
 public sealed class StdinTextSource : ITextSource, IDisposable
 {
@@ -23,7 +23,7 @@ public sealed class StdinTextSource : ITextSource, IDisposable
         if (!Console.IsInputRedirected)
         {
             throw new TextSourceErrorException(1,
-                "stdin не переопределён (интерактивный терминал). Передайте --input <файл> или направьте текст в stdin, например: " +
+                "stdin is not redirected (interactive terminal). Pass --input <file> or pipe text into stdin, for example: " +
                 "echo 'text' | textchunker --input -");
         }
     }
@@ -34,9 +34,9 @@ public sealed class StdinTextSource : ITextSource, IDisposable
         _opts = opts;
         _reader = Console.In;
 
-        // BOM на stdin может прийти как U+FFFD (невалидная последовательность в UTF-8)
-        // или как U+FEFF ( EF BB BF, корректно декодированное). В любом случае —
-        // не должен попадать в текст чанков: отбрасываем первый символ, если это BOM.
+        // A BOM on stdin may arrive as U+FFFD (an invalid UTF-8 sequence)
+        // or as U+FEFF (EF BB BF, correctly decoded). In either case it
+        // must not get into the chunk text: drop the first character if it is a BOM.
         int first = _reader.Peek();
         if (first >= 0)
         {
@@ -53,7 +53,7 @@ public sealed class StdinTextSource : ITextSource, IDisposable
     public IEnumerable<(string Content, long StartChar, long EndChar)> Lines()
     {
         if (_disposed) throw new ObjectDisposedException(nameof(StdinTextSource));
-        // DecoderFallbackException → TextSourceErrorException(4) перехватывается внутри TextLines.ReadLines.
+        // DecoderFallbackException → TextSourceErrorException(4) is caught inside TextLines.ReadLines.
         return TextLines.ReadLines(_reader, _opts);
     }
 
@@ -61,6 +61,6 @@ public sealed class StdinTextSource : ITextSource, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        // Console.In не закрываем — это stdin приложения.
+        // Console.In is not closed — it is the application's stdin.
     }
 }

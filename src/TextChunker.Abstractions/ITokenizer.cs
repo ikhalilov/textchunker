@@ -1,21 +1,21 @@
 namespace TextChunker.Abstractions;
 
-/// <summary>Подключаемый токенизатор. Основной точный режим — модельный (HF tokenizers + tokenizer.json).</summary>
+/// <summary>Pluggable tokenizer. The primary exact mode is the model tokenizer (HF tokenizers + tokenizer.json).</summary>
 public interface ITokenizer
 {
-    /// <summary>Имя токенизатора (`char`, `word`, `regex`, `huggingface`).</summary>
+    /// <summary>Tokenizer name (`char`, `word`, `regex`, `huggingface`).</summary>
     string Name { get; }
 
-    /// <summary>Имя/идентификатор модели (для модельного токенизатора).</summary>
+    /// <summary>Model name/identifier (for the model tokenizer).</summary>
     string? ModelName { get; }
 
-    /// <summary>Количество токенов текста.</summary>
+    /// <summary>Number of tokens in the text.</summary>
     int CountTokens(string text);
 
     /// <summary>
-    /// Жёсткий рез на границе токена: вернёт CharIndex, с которого начинается токен номер <paramref name="n"/>
-    /// (0-based); если n == CountTokens(text) — возвращает длину текста.
-    /// В Char/Word-режимах — CharIndex по rune/словам.
+    /// Hard cut at a token boundary: returns the CharIndex where token number <paramref name="n"/> begins
+    /// (0-based); if n == CountTokens(text), returns the text length.
+    /// In Char/Word modes — CharIndex by runes/words.
     /// </summary>
     int? CutAtTokenBoundary(string text, int n);
 }

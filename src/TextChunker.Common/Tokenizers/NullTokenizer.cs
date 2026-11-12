@@ -3,8 +3,8 @@ namespace TextChunker.Tokenizers;
 using TextChunker.Abstractions;
 
 /// <summary>
-/// Токенизатор «none»: не считает токены вовсе (CountTokens = 0),
-/// т.е. токенные лимиты не действуют. Граница — только начало/конец текста.
+/// The "none" tokenizer: it does not count tokens at all (CountTokens = 0),
+/// i.e. token limits do not apply. A boundary is only the start/end of the text.
 /// </summary>
 public sealed class NullTokenizer : ITokenizer
 {

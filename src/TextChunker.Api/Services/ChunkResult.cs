@@ -3,7 +3,7 @@ using TextChunker.Chunking;
 
 namespace TextChunker.Api.Services;
 
-/// <summary>Результат нарезки: чанки и агрегированная статистика.</summary>
-/// <param name="Chunks">Список чанков.</param>
-/// <param name="Stats">Агрегированная статистика.</param>
+/// <summary>Chunking result: the chunks and aggregated statistics.</summary>
+/// <param name="Chunks">The list of chunks.</param>
+/// <param name="Stats">Aggregated statistics.</param>
 public sealed record ChunkResult(IReadOnlyList<Chunk> Chunks, ChunkingStats Stats);

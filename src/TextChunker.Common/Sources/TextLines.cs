@@ -5,13 +5,13 @@ using TextChunker.Abstractions;
 
 namespace TextChunker.Sources;
 
-/// <summary>Общий конструктор StreamReader с BOM-обработкой и итератор строк в нормализованном пространстве.</summary>
+/// <summary>Shared StreamReader factory with BOM handling and a line iterator in normalized space.</summary>
 internal static class TextLines
 {
     private static readonly Regex WhitespaceCollapse = new(@"[ \t]+", RegexOptions.CultureInvariant);
     private static bool _codePagesRegistered;
 
-    /// <summary>Идиопотентная регистрация CodePages-провайдера (windows-1251, koi8-r, iso-8859-1 и др.).</summary>
+    /// <summary>Idempotent registration of the CodePages provider (windows-1251, koi8-r, iso-8859-1, etc.).</summary>
     public static void EnsureCodePages()
     {
         lock (typeof(TextLines))
@@ -25,8 +25,8 @@ internal static class TextLines
     }
 
     /// <summary>
-    /// StreamReader над источником: первые 4 байта читаются заранее; UTF-8 BOM (EF BB BF)
-    /// отбрасывается (только для UTF-8), дальше ConcatStream(head, stream).
+    /// StreamReader over the source: the first 4 bytes are read in advance; the UTF-8 BOM (EF BB BF)
+    /// is discarded (UTF-8 only), then ConcatStream(head, stream) follows.
     /// </summary>
     public static StreamReader CreateReader(Stream stream, TextSourceOptions opts, out bool bom)
     {
@@ -44,7 +44,7 @@ internal static class TextLines
 
         Stream combined = new ConcatStream(new MemoryStream(head, writable: false), stream);
         var enc = CreateEncoding(opts.EncodingName, throwOnInvalid: isUtf8 && opts.InvalidAsError);
-        // BOM уже отброшен вручную; auto-detection выключена; буфер 4096.
+        // The BOM has already been discarded manually; auto-detection is off; buffer 4096.
         return new StreamReader(combined, enc, false, 4096);
     }
 
@@ -53,7 +53,7 @@ internal static class TextLines
         if (IsUtf8Name(name))
         {
             // UTF8Encoding(encoderShouldEmitUTF8Identifier, throwOnInvalidBytes):
-            // throwOnInvalidBytes=false — замена невалидных последовательностей на U+FFFD;
+            // throwOnInvalidBytes=false — invalid sequences are replaced with U+FFFD;
             // throwOnInvalidBytes=true — DecoderFallbackException → exit 4.
             return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: throwOnInvalid);
         }
@@ -77,8 +77,8 @@ internal static class TextLines
     }
 
     /// <summary>
-    /// Итерация по строкам: (normLine, startChar, endChar). startChar/endChar — в пространстве
-    /// join(content_i, "\n"); endChar = startChar + normLine.Length (exclusive).
+    /// Line iteration: (normLine, startChar, endChar). startChar/endChar are in the space
+    /// of join(content_i, "\n"); endChar = startChar + normLine.Length (exclusive).
     /// </summary>
     public static IEnumerable<(string NormLine, long StartChar, long EndChar)>
         ReadLines(TextReader reader, TextSourceOptions opts)
@@ -102,7 +102,7 @@ internal static class TextLines
             string normLine = NormalizeLine(line, opts);
             long startChar = pos;
             long endChar = pos + normLine.Length;
-            pos = endChar + 1; // +1 — за \n (line ending)
+            pos = endChar + 1; // +1 — for the \n (line ending)
             yield return (normLine, startChar, endChar);
         }
     }
@@ -113,7 +113,7 @@ internal static class TextLines
 
         if (opts.NormalizeNfc || opts.NormalizeNfkc)
         {
-            // NFKC более сильный; если оба — NFKC.
+            // NFKC is stronger; if both are set — NFKC.
             var form = opts.NormalizeNfkc ? NormalizationForm.FormKC : NormalizationForm.FormC;
             result = result.Normalize(form);
         }

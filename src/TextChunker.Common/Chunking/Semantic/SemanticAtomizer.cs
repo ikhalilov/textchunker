@@ -4,24 +4,24 @@ using TextChunker.Abstractions.Embeddings;
 namespace TextChunker.Chunking.Semantic;
 
 /// <summary>
-/// Разбивает текст на атомы — единицы, которые семантическая нарезка считает неделимыми:
-/// блоки кода (целиком), заголовки Markdown, элементы списков, абзацы и предложения.
-/// Защита от сокращений (<c>т. д.</c>, <c>см.</c>, <c>Mr.</c>, инициалы) не даёт
-/// резать предложения на них. Все смещения — UTF-16 индексы в исходном тексте;
-/// атомы упорядочены, не пересекаются, а промежутки между ними — разделители.
+/// Splits text into atoms — units that semantic chunking treats as indivisible:
+/// code blocks (as a whole), Markdown headings, list items, paragraphs and sentences.
+/// Protection against abbreviations (<c>т. д.</c>, <c>см.</c>, <c>Mr.</c>, initials) prevents
+/// sentences from being split on them. All offsets are UTF-16 indices in the source text;
+/// atoms are ordered and do not overlap, and the gaps between them are separators.
 /// </summary>
 public static class SemanticAtomizer
 {
-    /// <summary>Сокращения, после которых точка не начинает новое предложение (нижний регистр, без точки).</summary>
+    /// <summary>Abbreviations after which a period does not start a new sentence (lowercase, without the period).</summary>
     private static readonly HashSet<string> Abbreviations = new(StringComparer.Ordinal)
     {
-        // русские
+        // Russian
         "т", "д", "п", "е", "г", "др", "см", "стр", "рис", "табл", "напр", "м", "ож",
         "тел", "факс", "проф", "доц", "акад", "член-корр", "ул", "пер", "просп", "бул",
         "обл", "р-н", "гор", "кв", "комн", "руб", "коп", "млн", "млрд", "тыс",
         "ст", "вв", "э", "гг", "т.е", "т.к", "т.н", "т.о", "т.п", "т.д", "пр",
         "ж", "муж", "раз", "экз", "шт", "цен", "№", "г.до н.э", "до н.э", "н.э",
-        // английские
+        // English
         "mr", "mrs", "ms", "dr", "prof", "st", "ave", "blvd", "rd", "vs", "etc", "inc",
         "ltd", "co", "corp", "fig", "eq", "no", "vol", "pp", "al", "ca", "approx",
         "dept", "est", "lb", "op", "cit", "p", "ed", "eds", "trans"
@@ -84,7 +84,7 @@ public static class SemanticAtomizer
             string content = text.Substring(line.Start, line.End - line.Start);
             string trimmed = content.Trim();
 
-            // 1. Блоки кода: ограждение открывает и закрывает, внутри ничего не режем.
+            // 1. Code blocks: a fence opens and closes them; nothing inside is split.
             if (fence is null && TryFenceMarker(trimmed, out char fenceChar))
             {
                 FlushParagraph();
@@ -105,7 +105,7 @@ public static class SemanticAtomizer
                 continue;
             }
 
-            // 2. Пустая строка завершает абзац и элемент списка.
+            // 2. A blank line ends the paragraph and the list item.
             if (trimmed.Length == 0)
             {
                 FlushParagraph();
@@ -113,7 +113,7 @@ public static class SemanticAtomizer
                 continue;
             }
 
-            // 3. Заголовок — отдельный атом.
+            // 3. A heading is a separate atom.
             if (IsHeading(trimmed))
             {
                 FlushParagraph();
@@ -122,8 +122,8 @@ public static class SemanticAtomizer
                 continue;
             }
 
-            // 4. Элемент списка: новая строка-маркер начинает новый атом,
-            //    отступленная продолжение-строка дописывается в текущий.
+            // 4. List item: a new marker line starts a new atom,
+            //    an indented continuation line is appended to the current one.
             if (IsListItem(trimmed))
             {
                 FlushParagraph();
@@ -143,7 +143,7 @@ public static class SemanticAtomizer
                 FlushListItem();
             }
 
-            // 5. Обычная строка абзаца.
+            // 5. An ordinary paragraph line.
             if (paragraphStart < 0)
             {
                 paragraphStart = line.Start;
@@ -151,7 +151,7 @@ public static class SemanticAtomizer
             paragraphEnd = line.End;
         }
 
-        // Незакрытое ограждение — атом до конца текста.
+        // An unclosed fence is an atom up to the end of the text.
         if (fence is not null)
         {
             atoms.Add(MakeAtom(text, fenceStart, text.Length, SemanticAtomKind.Code));
@@ -163,7 +163,7 @@ public static class SemanticAtomizer
         return PostProcess(atoms, text, tokenizer, options);
     }
 
-    /// <summary>Склейка коротких атомов и дробление слишком длинных.</summary>
+    /// <summary>Merging short atoms and splitting overly long ones.</summary>
     private static IReadOnlyList<SemanticAtom> PostProcess(
         List<SemanticAtom> atoms,
         string text,
@@ -212,9 +212,9 @@ public static class SemanticAtomizer
                 continue;
             }
 
-            // Короткий фрагмент в начале абзаца — это, как правило, подзаголовок
-            // («Охрана труда») или лид: приклеиваем к нему следующее предложение,
-            // чтобы граница темы осталась в начале атома.
+            // A short fragment at the start of a paragraph is usually a subheading
+            // ("Охрана труда") or a lead: the next sentence is glued to it
+            // so that the topic boundary stays at the start of the atom.
             bool paragraphStart = IsParagraphStart(text, atom.Start);
             int start = atom.Start;
             int end = atom.End;
@@ -228,8 +228,8 @@ public static class SemanticAtomizer
                 next++;
             }
 
-            // Дальше присоединяем только короткие атомы, пока не наберём минимум:
-            // длинное предложение внутрь короткого фрагмента не затягиваем.
+            // After that, only short atoms are appended until the minimum is reached:
+            // a long sentence is not pulled into a short fragment.
             while (next < atoms.Count
                    && IsMergeable(atoms[next])
                    && atoms[next].Text.Length < options.MinAtomChars
@@ -246,8 +246,8 @@ public static class SemanticAtomizer
                 continue;
             }
 
-            // Соседей нет: приклеиваемся к предыдущему короткому, иначе оставляем
-            // отдельным (короткий заголовок в конце абзаца важнее не потерять).
+            // No neighbours: glue to the previous short atom, otherwise keep it
+            // separate (it is more important not to lose a short heading at the end of a paragraph).
             if (result.Count > 0
                 && IsMergeable(result[result.Count - 1])
                 && result[result.Count - 1].Text.Length < options.MinAtomChars)
@@ -268,12 +268,12 @@ public static class SemanticAtomizer
     private static bool IsMergeable(SemanticAtom atom)
         => atom.Kind is SemanticAtomKind.Sentence or SemanticAtomKind.Text;
 
-    /// <summary>Атом начинается с новой строки после пустой строки (или с начала текста).</summary>
+    /// <summary>The atom starts on a new line after a blank line (or at the start of the text).</summary>
     private static bool IsParagraphStart(string text, int start)
         => start == 0
            || (start >= 2 && text[start - 1] == '\n' && text[start - 2] == '\n');
 
-    /// <summary>Жёсткий дробление атома по границам токенов (суррогаты не рвутся).</summary>
+    /// <summary>Hard splitting of an atom at token boundaries (surrogate pairs are never broken).</summary>
     private static IEnumerable<SemanticAtom> SplitOversized(SemanticAtom atom, ITokenizer tokenizer, int maxTokens)
     {
         string body = atom.Text;
@@ -298,7 +298,7 @@ public static class SemanticAtomizer
         }
     }
 
-    /// <summary>Разбиение диапазона на предложения с защитой от сокращений.</summary>
+    /// <summary>Splitting a range into sentences with protection against abbreviations.</summary>
     private static IEnumerable<SemanticAtom> SplitSentences(string text, int start, int end)
     {
         int sentenceStart = IndexOfNonWhitespace(text, start, end);
@@ -320,10 +320,10 @@ public static class SemanticAtomizer
             int terminatorEnd = i + 1;
             if (c == '.' && i + 2 < end && text[i + 1] == '.' && text[i + 2] == '.')
             {
-                terminatorEnd = i + 3; // «...”
+                terminatorEnd = i + 3; // "..."
             }
 
-            // «1.5» — десятичная дробь, не граница.
+            // "1.5" is a decimal fraction, not a boundary.
             if (c == '.'
                 && terminatorEnd < end
                 && char.IsDigit(text[terminatorEnd])
@@ -354,7 +354,7 @@ public static class SemanticAtomizer
                 continue;
             }
 
-            // Закрывающие кавычки/скобки после терминатора входят в предложение.
+            // Closing quotes/brackets after the terminator belong to the sentence.
             yield return MakeAtom(text, sentenceStart, afterTerminator, SemanticAtomKind.Sentence);
 
             int next = IndexOfNonWhitespace(text, afterTerminator, end);
@@ -377,7 +377,7 @@ public static class SemanticAtomizer
         }
     }
 
-    /// <summary>Слово перед терминатором — сокращение или инициал?</summary>
+    /// <summary>Is the word before the terminator an abbreviation or an initial?</summary>
     private static bool IsAbbreviation(string text, int sentenceStart, int terminatorIndex)
     {
         int wordEnd = terminatorIndex;
@@ -394,8 +394,8 @@ public static class SemanticAtomizer
 
         string word = text.Substring(wordStart, wordEnd - wordStart).ToLowerInvariant();
 
-        // Инициалы («И.», «А.С.») и однобуквенные сокращения не режем;
-        // одиночная цифра («раздел 2.») — наоборот, обычная граница.
+        // Initials ("И.", "А.С.") and single-letter abbreviations are not split on;
+        // a single digit ("раздел 2."), on the contrary, is an ordinary boundary.
         if (word.Length == 1 && char.IsLetter(word[0]))
         {
             return true;
@@ -433,7 +433,7 @@ public static class SemanticAtomizer
         return start - 1;
     }
 
-    /// <summary>Обрезанный атом с поправкой смещений на срезанные пробелы.</summary>
+    /// <summary>Trimmed atom with offsets adjusted for the trimmed whitespace.</summary>
     private static SemanticAtom MakeAtom(string source, int start, int end, SemanticAtomKind kind, int offset = 0)
     {
         int from = start;
@@ -546,6 +546,6 @@ public static class SemanticAtomizer
         return lines;
     }
 
-    /// <summary><see cref="End"/> — исключая перевод строки.</summary>
+    /// <summary><see cref="End"/> is exclusive of the line break.</summary>
     private readonly record struct Line(int Start, int End);
 }

@@ -1,8 +1,8 @@
 namespace TextChunker.Chunking.Semantic;
 
 /// <summary>
-/// Результат планирования семантических границ: атомы, попарные расстояния между
-/// соседями и индексы атомов, с которых начинается новый чанк.
+/// Result of semantic boundary planning: atoms, pairwise distances between
+/// neighbours and the indices of atoms at which a new chunk starts.
 /// </summary>
 public sealed class SemanticPlan
 {
@@ -36,16 +36,16 @@ public sealed class SemanticPlan
         BreakpointMask = mask;
     }
 
-    /// <summary>Атомы входного текста.</summary>
+    /// <summary>Atoms of the input text.</summary>
     public IReadOnlyList<SemanticAtom> Atoms { get; }
 
-    /// <summary><c>Distances[i]</c> — расстояние (1 − cosine) между атомами <c>i</c> и <c>i+1</c>; длина = atoms − 1.</summary>
+    /// <summary><c>Distances[i]</c> is the distance (1 − cosine) between atoms <c>i</c> and <c>i+1</c>; length = atoms − 1.</summary>
     public IReadOnlyList<double> Distances { get; }
 
-    /// <summary>Индексы атомов, с которых начинается новый чанк (возрастающие, без нуля).</summary>
+    /// <summary>Indices of atoms at which a new chunk starts (ascending, without zero).</summary>
     public IReadOnlyList<int> Breakpoints { get; }
 
-    /// <summary>Маска границ для O(1)-проверки в чанкере.</summary>
+    /// <summary>Boundary mask for O(1) checks in the chunker.</summary>
     public IReadOnlyList<bool> BreakpointMask { get; }
 
     public string Provider { get; }
@@ -54,13 +54,13 @@ public sealed class SemanticPlan
 
     public int Dimensions { get; }
 
-    /// <summary>Попадания в кэш эмбеддингов; null — кэш не использовался.</summary>
+    /// <summary>Embedding cache hits; null — the cache was not used.</summary>
     public long? EmbeddingCacheHits { get; }
 
-    /// <summary>Промахи кэша эмбеддингов; null — кэш не использовался.</summary>
+    /// <summary>Embedding cache misses; null — the cache was not used.</summary>
     public long? EmbeddingCacheMisses { get; }
 
-    /// <summary>Пустой план (текст без атомов или без границ).</summary>
+    /// <summary>Empty plan (text without atoms or without boundaries).</summary>
     public static SemanticPlan Empty(string provider = "none")
         => new([], [], [], provider, null, 0);
 

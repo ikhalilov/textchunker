@@ -1,14 +1,14 @@
 namespace TextChunker.Abstractions.Embeddings;
 
-/// <summary>Режим поведения при превышении лимита объёма семантического режима.</summary>
+/// <summary>Behavior when the size limit of the semantic mode is exceeded.</summary>
 public enum SemanticFallbackMode
 {
-    /// <summary>Нарезать через <c>recursive</c> с предупреждением в stderr.</summary>
+    /// <summary>Chunk via <c>recursive</c> with a warning on stderr.</summary>
     Recursive,
 
-    /// <summary>Завершиться с ошибкой (CLI exit 2 / API 413).</summary>
+    /// <summary>Fail with an error (CLI exit 2 / API 413).</summary>
     Error,
 
-    /// <summary>Обрабатывать большие документы окнами с перекрытием (bounded memory).</summary>
+    /// <summary>Process large documents in overlapping windows (bounded memory).</summary>
     Streaming
 }

@@ -4,8 +4,8 @@ using TextChunker.Abstractions;
 namespace TextChunker.Api.Services;
 
 /// <summary>
-/// IChunkWriter → bounded Channel для потокового HTTP-ответа. Блокируется при
-/// заполнении канала (backpressure); отмена чтения/клиента разблокирует запись.
+/// IChunkWriter → bounded Channel for a streaming HTTP response. Blocks when
+/// the channel is full (backpressure); cancellation of the read/client unblocks writing.
 /// </summary>
 public sealed class ChannelChunkWriter(ChannelWriter<Chunk> writer, CancellationToken cancellationToken) : IChunkWriter
 {

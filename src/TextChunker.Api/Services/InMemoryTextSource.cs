@@ -2,7 +2,7 @@ using TextChunker.Abstractions;
 
 namespace TextChunker.Api.Services;
 
-/// <summary>Источник текста из строки: split('\n') с абсолютными смещениями в join-пространстве.</summary>
+/// <summary>Text source built from a string: split('\n') with absolute offsets in the joined space.</summary>
 public sealed class InMemoryTextSource : ITextSource
 {
     private readonly List<(string Content, long StartChar, long EndChar)> _lines = [];

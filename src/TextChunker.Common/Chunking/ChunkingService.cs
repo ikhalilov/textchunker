@@ -7,7 +7,7 @@ using TextChunker.Chunking.Semantic;
 
 namespace TextChunker.Chunking;
 
-/// <summary>Агрегированная статистика прогона (--stats).</summary>
+/// <summary>Aggregated statistics of a run (--stats).</summary>
 public sealed class ChunkingStats
 {
     public int ChunkCount { get; init; }
@@ -18,21 +18,21 @@ public sealed class ChunkingStats
     public long InputBytes { get; init; }
     public long ElapsedMs { get; init; }
 
-    /// <summary>Число атомов семантического плана; null для не-семантических стратегий.</summary>
+    /// <summary>Number of atoms in the semantic plan; null for non-semantic strategies.</summary>
     public int? SemanticAtomCount { get; init; }
 
-    /// <summary>Попадания в кэш эмбеддингов; null, если кэш не использовался.</summary>
+    /// <summary>Embedding cache hits; null if the cache was not used.</summary>
     public long? EmbeddingCacheHits { get; init; }
 
-    /// <summary>Промахи кэша эмбеддингов; null, если кэш не использовался.</summary>
+    /// <summary>Embedding cache misses; null if the cache was not used.</summary>
     public long? EmbeddingCacheMisses { get; init; }
 }
 
 /// <summary>
-/// Сервис нарезки: потоково читает строки источника, скармливает их стратегии,
-/// собирает <see cref="Chunk"/> (id/seq/source/смещения/размеры/tokenCount/metadata)
-/// и пишет через <see cref="IChunkWriter"/>. Последние два чанка задерживаются,
-/// чтобы применить --min-* / --drop-small к финальному чанку.
+/// Chunking service: streams the source lines, feeds them to the strategy,
+/// builds <see cref="Chunk"/> (id/seq/source/offsets/sizes/tokenCount/metadata)
+/// and writes them through <see cref="IChunkWriter"/>. The last two chunks are held back
+/// so that --min-* / --drop-small can be applied to the final chunk.
 /// </summary>
 public sealed class ChunkingService
 {
@@ -75,8 +75,8 @@ public sealed class ChunkingService
     }
 
     /// <summary>
-    /// Префикс сам по себе не должен съедать весь лимит: иначе ни один чанк не сможет
-    /// ему соответствовать (exit 2 / HTTP 400).
+    /// The prefix alone must not consume the whole limit: otherwise no chunk could
+    /// fit within it (exit 2 / HTTP 400).
     /// </summary>
     private void ValidatePrefixFitsLimit()
     {
@@ -97,13 +97,13 @@ public sealed class ChunkingService
         }
     }
 
-    /// <summary>true — стратегии нужен семантический план и провайдер эмбеддингов.</summary>
+    /// <summary>true — the strategy needs a semantic plan and an embedding provider.</summary>
     public bool RequiresPreplanning => _chunker is ISemanticPlanAware;
 
     /// <summary>
-    /// Асинхронная нарезка. Для семантической стратегии строит план границ
-    /// (document-mode: весь текст в память, лимит <see cref="SemanticOptions.MaxBytes"/>),
-    /// затем использует общий конвейер. Остальные стратегии работают как обычно.
+    /// Asynchronous chunking. For the semantic strategy it builds a boundary plan
+    /// (document mode: the whole text in memory, limit <see cref="SemanticOptions.MaxBytes"/>),
+    /// then uses the shared pipeline. Other strategies work as usual.
     /// </summary>
     public async Task<ChunkingStats> ProcessAsync(
         ITextSource source,
@@ -129,7 +129,7 @@ public sealed class ChunkingService
             return await ProcessSemanticWindowsAsync(source, writer, cancellationToken).ConfigureAwait(false);
         }
 
-        // Планирование (эмбеддинги) — самая дорогая часть semantic; включаем её в elapsedMs.
+        // Planning (embeddings) is the most expensive part of semantic; it is included in elapsedMs.
         var stopwatch = Stopwatch.StartNew();
         var builder = new StringBuilder();
         bool firstLine = true;
@@ -293,14 +293,14 @@ public sealed class ChunkingService
                 long startLocal = (chunk.StartChar ?? windowStart) - windowStart;
                 long endLocal = (chunk.EndChar ?? windowStart) - windowStart;
 
-                // Чанк целиком в перекрытии предыдущего окна — это дубль.
+                // A chunk entirely inside the previous window's overlap is a duplicate.
                 if (endLocal <= overlapChars)
                 {
                     continue;
                 }
 
-                // Чанк начинается в перекрытии: обрезаем префикс, чтобы не дублировать
-                // уже выданный текст и сохранить монотонные смещения.
+                // The chunk starts inside the overlap: trim the prefix so that already emitted
+                // text is not duplicated and offsets stay monotonic.
                 if (startLocal < overlapChars)
                 {
                     Chunk? clipped = ClipChunk(chunk, text, windowStart, overlapChars, endLocal);
@@ -324,7 +324,7 @@ public sealed class ChunkingService
             carry = TakeOverlapTail(windowLines, overlapLimit);
             if (carry.Count >= windowLines.Count && carry.Count > 0)
             {
-                // Окно маленькое: не тащим его целиком, иначе не будет прогресса.
+                // The window is small: do not carry it over entirely, otherwise there will be no progress.
                 carry.RemoveAt(0);
             }
         }
@@ -560,8 +560,8 @@ public sealed class ChunkingService
         }
         catch (OperationCanceledException)
         {
-            // Прерывание (Ctrl+C): уже собранные полные чанки всё равно отдаём.
-            // Запись чанка атомарна (writer пишет целую JSON-строку), недописанных нет.
+            // Cancellation (Ctrl+C): complete chunks already collected are still emitted.
+            // Chunk writing is atomic (the writer writes a whole JSON line), so none are half-written.
             FlushTail();
             throw;
         }
@@ -685,7 +685,7 @@ public sealed class ChunkingService
         metadata["unit"] = UnitName(_options.Unit);
         metadata["normalized"] = _normalized;
 
-        // Семантическая нарезка: провайдер/модель/перцентиль и применённый откат.
+        // Semantic chunking: provider/model/percentile and the fallback applied.
         if (!string.IsNullOrWhiteSpace(_options.Strategy)
             && _options.Strategy.Trim().Equals(ChunkerFactory.SemanticStrategyName, StringComparison.OrdinalIgnoreCase)
             || _semanticPlan is not null

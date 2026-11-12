@@ -5,8 +5,8 @@ using System.Text.Json;
 namespace TextChunker.IntegrationTests;
 
 /// <summary>
-/// CLI-тесты семантической нарезки. Используют офлайн-провайдер <c>hash</c>,
-/// поэтому сеть и llama.cpp не нужны; проверяют лимиты, метаданные и коды ошибок.
+/// CLI tests for semantic chunking. They use the offline <c>hash</c> provider,
+/// so neither the network nor llama.cpp is needed; they verify limits, metadata and error codes.
 /// </summary>
 public sealed class SemanticCliTests
 {
@@ -475,7 +475,7 @@ public sealed class SemanticCliTests
                 "--tokenizer", "char",
                 "--max-chars", "5");
 
-            // Не-семантическая стратегия не должна падать из-за неиспользуемых опций.
+            // A non-semantic strategy must not fail because of unused options.
             Assert.Equal(0, result.ExitCode);
             Assert.Equal(2, ParseJsonLines(result.StdOut).Length);
         }

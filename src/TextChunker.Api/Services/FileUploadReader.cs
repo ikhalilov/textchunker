@@ -3,8 +3,8 @@ using System.Text;
 namespace TextChunker.Api.Services;
 
 /// <summary>
-/// Чтение загруженного `.txt`/`.md`/`.markdown` файла: проверка расширения и размера,
-/// кодировка (UTF-8 по умолчанию, кодовые страницы), BOM, режим invalid-encoding.
+/// Reading an uploaded `.txt`/`.md`/`.markdown` file: extension and size checks,
+/// encoding (UTF-8 by default, code pages), BOM, and invalid-encoding mode.
 /// </summary>
 public static class FileUploadReader
 {

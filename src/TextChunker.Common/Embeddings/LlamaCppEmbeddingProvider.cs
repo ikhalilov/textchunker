@@ -7,11 +7,11 @@ using TextChunker.Abstractions.Embeddings;
 namespace TextChunker.Embeddings;
 
 /// <summary>
-/// Провайдер эмбеддингов поверх внешнего llama.cpp-сервера:
-/// <c>POST {endpoint}/v1/embeddings</c> (OpenAI-совместимый протокол) с телом
-/// <c>{ "model": "...", "input": [ ... ] }</c>. Батчнирует, переотправляет сетевые
-/// ошибки и 429/5xx с экспоненциальной задержкой, проверяет размерность и
-/// L2-нормализует векторы. Сам сервер приложением не запускается.
+/// Embedding provider on top of an external llama.cpp server:
+/// <c>POST {endpoint}/v1/embeddings</c> (OpenAI-compatible protocol) with the body
+/// <c>{ "model": "...", "input": [ ... ] }</c>. It batches, resends network
+/// errors and 429/5xx with exponential backoff, validates dimensionality and
+/// L2-normalizes the vectors. The server itself is not started by the application.
 /// </summary>
 public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingModelInfo
 {
@@ -26,12 +26,12 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
 
     public int Dimensions => _options.Dimensions;
 
-    /// <summary>Значение поля <c>model</c> в запросе (null — поле не отправляется).</summary>
+    /// <summary>Value of the <c>model</c> field in the request (null — the field is not sent).</summary>
     public string? Model => string.IsNullOrWhiteSpace(_options.Model) ? null : _options.Model!.Trim();
 
     string? IEmbeddingModelInfo.ModelName => Model;
 
-    /// <summary>Полный URL эндпоинта эмбеддингов (для диагностики и тестов).</summary>
+    /// <summary>Full URL of the embeddings endpoint (for diagnostics and tests).</summary>
     internal string EmbeddingsUrlForTests => _embeddingsUrl;
 
     public LlamaCppEmbeddingProvider(EmbeddingOptions options)
@@ -44,18 +44,18 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
     {
     }
 
-    /// <summary>Тестируемая перегрузка: позволяет подменить <see cref="HttpClient"/>.</summary>
+    /// <summary>Testable overload: allows the <see cref="HttpClient"/> to be substituted.</summary>
     public LlamaCppEmbeddingProvider(EmbeddingOptions options, string? apiKey, HttpClient? httpClient)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _options.Validate();
         _apiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey.Trim();
 
-        // Абсолютный URL: не зависим от BaseAddress注入-клиента.
+        // Absolute URL: independent of the BaseAddress of an injected client.
         _embeddingsUrl = options.Endpoint.TrimEnd('/') + EmbeddingsSuffix;
 
-        // Провайдер живёт столько же, сколько процесс (как и кэш токенизаторов),
-        // поэтому HttpClient создаётся один раз и не освобождается явно.
+        // The provider lives as long as the process (just like the tokenizer cache),
+        // so HttpClient is created once and is not disposed explicitly.
         _http = httpClient ?? new HttpClient { Timeout = options.Timeout };
     }
 
@@ -72,9 +72,9 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             return Array.Empty<float[]>();
         }
 
-        // Дедупликация: одинаковые тексты (частый случай в повторяющихся документах)
-        // эмбеддятся один раз. Это и меньше запросов, и стабильный результат между
-        // холодным прогоном и прогоном из кэша.
+        // Deduplication: identical texts (a frequent case in repetitive documents)
+        // are embedded once. This means fewer requests and a stable result between
+        // a cold run and a run from the cache.
         var uniqueTexts = new List<string>(texts.Count);
         var uniqueIndex = new Dictionary<string, int>(texts.Count, StringComparer.Ordinal);
         var mapping = new int[texts.Count];
@@ -120,8 +120,8 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             return result;
         }
 
-        // Параллельные батчи: порядок результатов сохраняется по offset,
-        // число одновременных запросов ограничено Concurrency.
+        // Parallel batches: the order of results is preserved by offset,
+        // and the number of concurrent requests is limited by Concurrency.
         var gate = new SemaphoreSlim(_options.Concurrency, _options.Concurrency);
         var tasks = new List<Task>(batches.Count);
         foreach ((int offset, List<string> batch) in batches)
@@ -135,9 +135,9 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
     }
 
     /// <summary>
-    /// Батчи по BatchSize и MaxBatchChars. Бюджет по символам — консервативная
-    /// оценка токенов: провайдер не знает токенизатор сервера. Один текст длиннее
-    /// бюджета всё равно отправляется отдельным батчем.
+    /// Batches by BatchSize and MaxBatchChars. The character budget is a conservative
+    /// estimate of tokens: the provider does not know the server's tokenizer. A single text longer than
+    /// the budget is still sent as a separate batch.
     /// </summary>
     private List<(int Offset, List<string> Texts)> BuildBatches(IReadOnlyList<string> texts)
     {
@@ -196,9 +196,9 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
     }
 
     /// <summary>
-    /// Сервер не принял порцию целиком. Сначала делим батч пополам; если не влезает
-    /// один текст — режем его по границе слова и усредняем векторы половин
-    /// (взвешенно по длине, затем L2-нормализация).
+    /// The server did not accept the portion as a whole. First the batch is split in half; if a single
+    /// text still does not fit, it is cut at a word boundary and the vectors of the halves are averaged
+    /// (weighted by length, followed by L2 normalization).
     /// </summary>
     private async Task<float[][]> SplitAndEmbedAsync(
         IReadOnlyList<string> batch,
@@ -257,7 +257,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             cut = middle;
         }
 
-        // Не разрываем суррогатную пару.
+        // Do not break a surrogate pair.
         if (cut > 0 && cut < text.Length && char.IsLowSurrogate(text[cut]))
         {
             cut--;
@@ -310,7 +310,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             }
             catch (InputTooLargeException)
             {
-                // Физический батч сервера меньше, чем наша порция: дробим батч/текст.
+                // The server's physical batch is smaller than our portion: split the batch/text.
                 return await SplitAndEmbedAsync(batch, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception exception) when (IsTransient(exception, cancellationToken) && attempt < _options.MaxRetries)
@@ -528,7 +528,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         return value.Length <= 500 ? value : value.Substring(0, 500) + "…";
     }
 
-    /// <summary>Внутренний маркер «статус переотправляемый».</summary>
+    /// <summary>Internal marker for "retryable status".</summary>
     private sealed class TransientStatusException : Exception
     {
         public TransientStatusException(string message, Exception innerException)
@@ -537,7 +537,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         }
     }
 
-    /// <summary>Вход не помещается в физический батч сервера; батч/текст нужно разделить.</summary>
+    /// <summary>The input does not fit the server's physical batch; the batch/text must be split.</summary>
     private sealed class InputTooLargeException : Exception
     {
         public InputTooLargeException(string message)

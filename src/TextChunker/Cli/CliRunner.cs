@@ -14,7 +14,7 @@ using TextChunker.Writers;
 
 namespace TextChunker.Cli;
 
-/// <summary>Разбор аргументов и запуск конвейера: источник → токенизатор → нарезка → writer.</summary>
+/// <summary>Argument parsing and pipeline invocation: source → tokenizer → chunking → writer.</summary>
 public static class CliRunner
 {
     public static int Run(string[] args)
@@ -23,8 +23,8 @@ public static class CliRunner
     }
 
     /// <summary>
-    /// Тестируемая точка входа: внешний <paramref name="cancellationToken"/> имитирует Ctrl+C,
-    /// <paramref name="configureConsole"/> позволяет не трогать глобальные Console-потоки в тестах.
+    /// Testable entry point: the external <paramref name="cancellationToken"/> simulates Ctrl+C,
+    /// and <paramref name="configureConsole"/> keeps tests from touching the global Console streams.
     /// </summary>
     public static int Run(string[] args, CancellationToken cancellationToken, bool configureConsole = true)
     {
@@ -40,7 +40,7 @@ public static class CliRunner
         }
 
         var options = new Options();
-        var root = new RootCommand("TextChunker — потоковая нарезка текста на чанки для RAG.");
+        var root = new RootCommand("TextChunker — streaming text chunking for RAG.");
         options.AddTo(root);
         root.SetAction(parseResult => Execute(parseResult, options, cancellationToken));
 
@@ -77,12 +77,12 @@ public static class CliRunner
     }
 
     /// <summary>
-    /// Настройка консоли:
-    /// 1) при перенаправлении stdout/stderr (pipe/файл) .NET по умолчанию использует
-    ///    кодовую страницу консоли и заменяет не-ASCII на '?'. Подменяем writer'ы на UTF-8
-    ///    без BOM (JSONL и сообщения остаются корректными);
-    /// 2) при наличии интерактивной консоли/окна отладчика переключаем кодовую страницу
-    ///    на UTF-8, иначе кириллица в диагностике превращается в '?'.
+    /// Console setup:
+    /// 1) when stdout/stderr are redirected (pipe/file), .NET by default uses
+    ///    the console code page and replaces non-ASCII with '?'. We swap the writers for UTF-8
+    ///    without a BOM (JSONL and messages stay correct);
+    /// 2) when an interactive console/debugger window is present, we switch the code page
+    ///    to UTF-8; otherwise Cyrillic in diagnostics turns into '?'.
     /// </summary>
     private static void ConfigureConsole()
     {
@@ -114,13 +114,13 @@ public static class CliRunner
                 }
                 catch (Exception)
                 {
-                    // Консоль недоступна (например, нет окна) — оставляем как есть.
+                    // The console is unavailable (for example, no window) — leave it as is.
                 }
             }
         }
         catch (IOException)
         {
-            // Нет доступа к стандартным потокам — оставляем поведение по умолчанию.
+            // No access to the standard streams — keep the default behavior.
         }
     }
 
@@ -361,7 +361,7 @@ public static class CliRunner
             ["elapsedMs"] = stats.ElapsedMs
         };
 
-        // Семантическая диагностика — только когда она есть.
+        // Semantic diagnostics — only when present.
         if (stats.SemanticAtomCount is { } atomCount)
         {
             payload["semanticAtomCount"] = atomCount;
@@ -423,10 +423,10 @@ public static class CliRunner
         public bool HasNormalization =>
             NormalizeNfc || NormalizeNfkc || NormalizeLineEndings || NormalizeWhitespace;
 
-        /// <summary>Предупреждение о документе больше лимита семантического режима.</summary>
+        /// <summary>Warning that the document exceeds the semantic mode limit.</summary>
         public string? SemanticFallbackWarning { get; init; }
 
-        /// <summary>Планировщик семантических границ; null для не-семантических стратегий.</summary>
+        /// <summary>Semantic boundary planner; null for non-semantic strategies.</summary>
         public ISemanticPlanner? CreateSemanticPlanner()
         {
             if (!ChunkerFactory.RequiresEmbeddings(Strategy))
@@ -447,7 +447,7 @@ public static class CliRunner
 
             if (maxTokens is null && maxChars is null && maxWords is null && maxBytes is null)
             {
-                maxTokens = 512; // дефолтный RAG-лимит (см. design.md, decision 2)
+                maxTokens = 512; // default RAG limit (see design.md, decision 2)
             }
 
             return new ChunkingOptions(
@@ -472,204 +472,204 @@ public static class CliRunner
     {
         private readonly Option<string> _input = new("--input")
         {
-            Description = "Входной файл; '-' или отсутствие — stdin."
+            Description = "Input file; '-' or omitted — stdin."
         };
 
         private readonly Option<string> _output = new("--output")
         {
-            Description = "Файл вывода (по умолчанию stdout)."
+            Description = "Output file (stdout by default)."
         };
 
         private readonly Option<string> _strategy = new("--strategy")
         {
-            Description = "Стратегия: fixed | recursive | paragraph (по умолчанию recursive)."
+            Description = "Strategy: fixed | recursive | paragraph (default recursive)."
         };
 
         private readonly Option<string> _tokenizer = new("--tokenizer")
         {
-            Description = "Токенизатор: none | char | word | regex | huggingface (по умолчанию word)."
+            Description = "Tokenizer: none | char | word | regex | huggingface (default word)."
         };
 
         private readonly Option<string> _tokenizerModel = new("--tokenizer-model")
         {
-            Description = "Модель/путь tokenizer.json (по умолчанию google/embeddinggemma-2)."
+            Description = "Model/path to tokenizer.json (default google/embeddinggemma-2)."
         };
 
         private readonly Option<string> _tokenizerPath = new("--tokenizer-path")
         {
-            Description = "Путь к локальному tokenizer.json (приоритетнее --tokenizer-model)."
+            Description = "Path to a local tokenizer.json (takes precedence over --tokenizer-model)."
         };
 
         private readonly Option<string> _tokenizerCacheDir = new("--tokenizer-cache-dir")
         {
-            Description = "Каталог кэша tokenizer.json."
+            Description = "tokenizer.json cache directory."
         };
 
         private readonly Option<string> _prefix = new("--prefix")
         {
-            Description = "Task-префикс, учитываемый в лимите токенов."
+            Description = "Task prefix counted toward the token limit."
         };
 
-        private readonly Option<int?> _maxTokens = new("--max-tokens") { Description = "Максимум токенов на чанк." };
-        private readonly Option<int?> _maxChars = new("--max-chars") { Description = "Максимум символов на чанк." };
-        private readonly Option<int?> _maxWords = new("--max-words") { Description = "Максимум слов на чанк." };
-        private readonly Option<int?> _maxBytes = new("--max-bytes") { Description = "Максимум байт UTF-8 на чанк." };
-        private readonly Option<int?> _minTokens = new("--min-tokens") { Description = "Минимум токенов для финального чанка." };
-        private readonly Option<int?> _minChars = new("--min-chars") { Description = "Минимум символов для финального чанка." };
-        private readonly Option<int?> _minWords = new("--min-words") { Description = "Минимум слов для финального чанка." };
-        private readonly Option<int?> _overlapTokens = new("--overlap-tokens") { Description = "Перекрытие в токенах." };
-        private readonly Option<int?> _overlapChars = new("--overlap-chars") { Description = "Перекрытие в символах." };
+        private readonly Option<int?> _maxTokens = new("--max-tokens") { Description = "Maximum tokens per chunk." };
+        private readonly Option<int?> _maxChars = new("--max-chars") { Description = "Maximum characters per chunk." };
+        private readonly Option<int?> _maxWords = new("--max-words") { Description = "Maximum words per chunk." };
+        private readonly Option<int?> _maxBytes = new("--max-bytes") { Description = "Maximum UTF-8 bytes per chunk." };
+        private readonly Option<int?> _minTokens = new("--min-tokens") { Description = "Minimum tokens for the final chunk." };
+        private readonly Option<int?> _minChars = new("--min-chars") { Description = "Minimum characters for the final chunk." };
+        private readonly Option<int?> _minWords = new("--min-words") { Description = "Minimum words for the final chunk." };
+        private readonly Option<int?> _overlapTokens = new("--overlap-tokens") { Description = "Overlap in tokens." };
+        private readonly Option<int?> _overlapChars = new("--overlap-chars") { Description = "Overlap in characters." };
 
-        private readonly Option<bool> _trim = new("--trim") { Description = "Обрезать пробелы по краям (включено по умолчанию; --no-trim отключает)." };
-        private readonly Option<bool> _noTrim = new("--no-trim") { Description = "Не обрезать пробелы по краям чанка." };
-        private readonly Option<bool> _dropSmall = new("--drop-small") { Description = "Отбросить финальный чанк меньше --min-*." };
+        private readonly Option<bool> _trim = new("--trim") { Description = "Trim whitespace at the edges (enabled by default; --no-trim disables it)." };
+        private readonly Option<bool> _noTrim = new("--no-trim") { Description = "Do not trim whitespace at the chunk edges." };
+        private readonly Option<bool> _dropSmall = new("--drop-small") { Description = "Discard the final chunk if it is smaller than --min-*." };
 
         private readonly Option<string[]> _separators = new("--separators")
         {
-            Description = "Разделители recursive по убыванию приоритета (\"\\n\\n\", \"\\n\", ...).",
+            Description = "Recursive separators in descending priority order (\"\\n\\n\", \"\\n\", ...).",
             AllowMultipleArgumentsPerToken = true
         };
 
-        private readonly Option<bool> _stats = new("--stats") { Description = "Вывести статистику (JSON) в stderr." };
+        private readonly Option<bool> _stats = new("--stats") { Description = "Write statistics (JSON) to stderr." };
 
-        // --- семантическая нарезка ---
+        // --- semantic chunking ---
         private readonly Option<string> _embeddingProvider = new("--embedding-provider")
         {
-            Description = "Провайдер эмбеддингов: llama-cpp | hash (по умолчанию llama-cpp)."
+            Description = "Embedding provider: llama-cpp | hash (default llama-cpp)."
         };
 
         private readonly Option<string> _embeddingEndpoint = new("--embedding-endpoint")
         {
-            Description = "URL сервера эмбеддингов (по умолчанию http://127.0.0.1:9932)."
+            Description = "URL of the embedding server (default http://127.0.0.1:9932)."
         };
 
         private readonly Option<string> _embeddingModel = new("--embedding-model")
         {
-            Description = "Имя модели в запросе к серверу эмбеддингов."
+            Description = "Model name in requests to the embedding server."
         };
 
         private readonly Option<int?> _embeddingBatchSize = new("--embedding-batch-size")
         {
-            Description = "Размер батча эмбеддингов (по умолчанию 32)."
+            Description = "Embedding batch size (default 32)."
         };
 
         private readonly Option<int?> _embeddingDimensions = new("--embedding-dimensions")
         {
-            Description = "Ожидаемая размерность векторов, 0 — не проверять (по умолчанию 768)."
+            Description = "Expected vector dimensionality, 0 — do not check (default 768)."
         };
 
         private readonly Option<int?> _embeddingMaxBatchChars = new("--embedding-max-batch-chars")
         {
-            Description = "Символьный бюджет батча (по умолчанию 8000; 0 — без ограничения)."
+            Description = "Character budget per batch (default 8000; 0 — no limit)."
         };
 
         private readonly Option<int?> _embeddingConcurrency = new("--embedding-concurrency")
         {
-            Description = "Сколько батчей отправлять параллельно (по умолчанию 1)."
+            Description = "How many batches to send in parallel (default 1)."
         };
 
         private readonly Option<int?> _embeddingTimeout = new("--embedding-timeout")
         {
-            Description = "Таймаут HTTP-запроса к серверу эмбеддингов, секунды (по умолчанию 120)."
+            Description = "HTTP request timeout to the embedding server, seconds (default 120)."
         };
 
         private readonly Option<int?> _embeddingMaxRetries = new("--embedding-max-retries")
         {
-            Description = "Повторы на сетевые ошибки и 429/5xx (по умолчанию 3)."
+            Description = "Retries on network errors and 429/5xx (default 3)."
         };
 
         private readonly Option<string> _embeddingPrompt = new("--embedding-prompt")
         {
-            Description = "Префикс-промпт, добавляемый к каждому атому перед эмбеддингом."
+            Description = "Prefix prompt added to each atom before embedding."
         };
 
         private readonly Option<string> _embeddingCacheDir = new("--embedding-cache-dir")
         {
-            Description = "Каталог кэша эмбеддингов (по умолчанию LocalApplicationData/TextChunker/embeddings)."
+            Description = "Embedding cache directory (default LocalApplicationData/TextChunker/embeddings)."
         };
 
         private readonly Option<long?> _embeddingCacheMaxBytes = new("--embedding-cache-max-bytes")
         {
-            Description = "Максимальный размер кэша эмбеддингов в байтах (по умолчанию без лимита)."
+            Description = "Maximum embedding cache size in bytes (unlimited by default)."
         };
 
         private readonly Option<int?> _embeddingCacheTtlDays = new("--embedding-cache-ttl-days")
         {
-            Description = "Удалять записи кэша старше N дней (по умолчанию без TTL)."
+            Description = "Delete cache entries older than N days (no TTL by default)."
         };
 
         private readonly Option<bool> _pruneCache = new("--prune-cache")
         {
-            Description = "Обслужить кэш (TTL/лимит) и выйти, без чтения входа."
+            Description = "Maintain the cache (TTL/limit) and exit, without reading input."
         };
 
         private readonly Option<bool> _pruneCacheDryRun = new("--prune-cache-dry-run")
         {
-            Description = "Показать, что будет удалено, но ничего не удалять."
+            Description = "Show what would be deleted without deleting anything."
         };
 
         private readonly Option<bool> _noEmbeddingCache = new("--no-embedding-cache")
         {
-            Description = "Не использовать дисковый кэш эмбеддингов."
+            Description = "Do not use the on-disk embedding cache."
         };
 
         private readonly Option<double?> _semanticPercentile = new("--semantic-percentile")
         {
-            Description = "Перцентиль расстояний для границ, (0, 1] (по умолчанию 0.90)."
+            Description = "Distance percentile for boundaries, (0, 1] (default 0.90)."
         };
 
         private readonly Option<double?> _semanticMinDistance = new("--semantic-min-distance")
         {
-            Description = "Минимальная дистанция границы (по умолчанию 0.02)."
+            Description = "Minimum boundary distance (default 0.02)."
         };
 
         private readonly Option<int?> _semanticWindow = new("--semantic-window")
         {
-            Description = "Окно TextTiling для расстояний (по умолчанию 1 — соседние атомы)."
+            Description = "TextTiling window for distances (default 1 — neighboring atoms)."
         };
 
         private readonly Option<long?> _semanticMaxBytes = new("--semantic-max-bytes")
         {
-            Description = "Лимит объёма входа для semantic, байт (по умолчанию 20000000)."
+            Description = "Input size limit for semantic, bytes (default 20000000)."
         };
 
         private readonly Option<int?> _semanticStreamWindowBytes = new("--semantic-stream-window-bytes")
         {
-            Description = "Размер окна streaming-режима, байт (по умолчанию 4000000)."
+            Description = "Streaming mode window size, bytes (default 4000000)."
         };
 
         private readonly Option<int?> _semanticStreamOverlapBytes = new("--semantic-stream-overlap-bytes")
         {
-            Description = "Перекрытие соседних streaming-окон, байт (по умолчанию 256000)."
+            Description = "Overlap between adjacent streaming windows, bytes (default 256000)."
         };
 
         private readonly Option<string> _semanticFallback = new("--semantic-fallback")
         {
-            Description = "Поведение при превышении лимита: recursive | error (по умолчанию recursive)."
+            Description = "Behavior when the limit is exceeded: recursive | error (default recursive)."
         };
 
         private readonly Option<int?> _semanticMinAtomChars = new("--semantic-min-atom-chars")
         {
-            Description = "Склейка атомов короче N символов (по умолчанию 20)."
+            Description = "Merge atoms shorter than N characters (default 20)."
         };
 
         private readonly Option<int?> _semanticMaxAtomTokens = new("--semantic-max-atom-tokens")
         {
-            Description = "Предварительное дробление атомов длиннее N токенов (по умолчанию 512)."
+            Description = "Pre-split atoms longer than N tokens (default 512)."
         };
 
-        private readonly Option<string> _encoding = new("--encoding") { Description = "Кодировка входа (по умолчанию utf-8)." };
+        private readonly Option<string> _encoding = new("--encoding") { Description = "Input encoding (default utf-8)." };
         private readonly Option<string> _invalidEncoding = new("--invalid-encoding") { Description = "replace | error." };
-        private readonly Option<string> _format = new("--format") { Description = "jsonl | text (по умолчанию jsonl)." };
+        private readonly Option<string> _format = new("--format") { Description = "jsonl | text (default jsonl)." };
 
         private readonly Option<string> _normalize = new("--normalize")
         {
-            Description = "Нормализация: nfc, nfkc, line-endings, whitespace (можно через запятую или all)."
+            Description = "Normalization: nfc, nfkc, line-endings, whitespace (comma-separated or all)."
         };
 
         private readonly Option<string[]> _metadata = new("--metadata")
         {
-            Description = "Пользовательские метаданные key=value (можно несколько раз).",
+            Description = "User metadata key=value (can be repeated).",
             AllowMultipleArgumentsPerToken = true
         };
 

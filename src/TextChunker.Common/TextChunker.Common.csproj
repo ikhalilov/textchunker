@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.2.0</Version>
-    <Description>Общая библиотека TextChunker: движок нарезки, токенизаторы, эмбеддинги, писатели, источники текста.</Description>
+    <Description>Shared TextChunker library: the chunking engine, tokenizers, embeddings, writers, text sources.</Description>
     <IsPackable>true</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>

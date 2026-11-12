@@ -3,9 +3,9 @@ using TextChunker.Abstractions.Embeddings;
 namespace TextChunker.Embeddings;
 
 /// <summary>
-/// Декоратор провайдера эмбеддингов с дисковым кэшем: сначала читает кэш, недостающие
-/// тексты отправляет внутрь пакетами и дописывает результат в кэш. Порядок и размерность
-/// совпадают с внутренним провайдером; статистика попаданий доступна для <c>--stats</c>.
+/// Decorator of an embedding provider with a disk cache: it reads the cache first, sends the
+/// missing texts to the inner provider in batches and appends the result to the cache. The order and dimensionality
+/// match the inner provider; hit statistics are available for <c>--stats</c>.
 /// </summary>
 public sealed class CachedEmbeddingProvider : IEmbeddingProvider, IEmbeddingModelInfo, IEmbeddingCacheStats
 {
@@ -22,10 +22,10 @@ public sealed class CachedEmbeddingProvider : IEmbeddingProvider, IEmbeddingMode
 
     public int Dimensions => _inner.Dimensions;
 
-    /// <summary>Внутренний провайдер (для диагностики/тестов).</summary>
+    /// <summary>Inner provider (for diagnostics/tests).</summary>
     public IEmbeddingProvider Inner => _inner;
 
-    /// <summary>Каталог области кэша (для диагностики/тестов).</summary>
+    /// <summary>Cache scope directory (for diagnostics/tests).</summary>
     public string? ScopeDirectory => _cache.ScopeDirectory;
 
     string? IEmbeddingModelInfo.ModelName => _inner is IEmbeddingModelInfo info ? info.ModelName : null;

@@ -70,13 +70,13 @@ public sealed class FixedChunkerTests
         var options = new ChunkingOptions(strategy: "fixed", maxChars: 4);
         var chunker = new FixedChunker();
 
-        // Ровно 4 символа: может продолжиться, поэтому не выдаём.
+        // Exactly 4 characters: the text may continue, so we do not emit anything.
         ChunkSplit first = chunker.Chunk("abcd", new WordTokenizer(), options, final: false);
         Assert.Empty(first.Segments);
         Assert.True(first.MoreNeeded);
         Assert.Equal(0, first.ConsumedEnd);
 
-        // 5 символов: первый чанк выдан, хвост (1 символ) удержан.
+        // 5 characters: the first chunk is emitted, and the tail (1 character) is held back.
         ChunkSplit second = chunker.Chunk("abcde", new WordTokenizer(), options, final: false);
         Assert.Equal(new[] { "abcd" }, second.Segments.Select(s => s.Text).ToArray());
         Assert.True(second.MoreNeeded);

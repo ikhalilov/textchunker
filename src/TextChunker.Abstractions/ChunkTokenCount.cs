@@ -1,15 +1,15 @@
 namespace TextChunker.Abstractions;
 
 /// <summary>
-/// Финальный пересчёт токенов собранного чанка (task 3.4): count считается по итоговому
-/// тексту <c>prefix + chunkText</c>, а не как сумма токенов частей — на границе склейки
-/// число токенов модели может меняться (например, BPE <c>"hello wor" + "ld"</c>).
+/// Final token recount for an assembled chunk (task 3.4): the count is computed over the resulting
+/// text <c>prefix + chunkText</c>, not as the sum of the token counts of the parts, because the
+/// model's token count can change at the join boundary (for example, BPE <c>"hello wor" + "ld"</c>).
 /// </summary>
 public static class ChunkTokenCount
 {
     /// <summary>
-    /// Точное число токенов итогового текста чанка с учётом task-префикса.
-    /// Значение записывается в <see cref="Chunk.TokenCount"/>.
+    /// Exact token count of the chunk's final text, including the task prefix.
+    /// The value is written to <see cref="Chunk.TokenCount"/>.
     /// </summary>
     public static int ForFinalChunk(ITokenizer tokenizer, string chunkText, string? prefix = null)
     {

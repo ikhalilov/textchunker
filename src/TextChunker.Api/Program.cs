@@ -30,7 +30,7 @@ builder.Services.AddApiDocs(builder.Configuration);
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    // Ограничение тела запроса; текст дополнительно проверяется на MaxTextChars.
+    // Request body limit; the text is additionally checked against MaxTextChars.
     options.Limits.MaxRequestBodySize = MaxRequestBodySizeBytes;
 });
 
@@ -47,29 +47,29 @@ api.MapGet("/health", () => Results.Ok(new HealthResponse(
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
         ?? "0.0.0")))
     .WithName("Health")
-    .WithTags("Справочники")
-    .WithSummary("Состояние сервиса")
-    .WithDescription("Возвращает `ok` и версию сборки. Используйте для health-check.")
+    .WithTags("Reference")
+    .WithSummary("Service health")
+    .WithDescription("Returns `ok` and the assembly version. Use it for health checks.")
     .Produces<HealthResponse>(StatusCodes.Status200OK);
 
 api.MapGet("/tokenizers", () => Results.Ok(new TokenizersResponse(
     TokenizerFactory.SupportedNames,
     HuggingFaceTokenizer.DefaultModelName)))
     .WithName("Tokenizers")
-    .WithTags("Справочники")
-    .WithSummary("Список токенизаторов")
-    .WithDescription("Допустимые значения поля `tokenizer` и модель HuggingFace по умолчанию.")
+    .WithTags("Reference")
+    .WithSummary("List of tokenizers")
+    .WithDescription("Allowed `tokenizer` values and the default HuggingFace model.")
     .Produces<TokenizersResponse>(StatusCodes.Status200OK);
 
 api.MapGet("/strategies", () => Results.Ok(new StrategiesResponse(
     ChunkerFactory.SupportedStrategies)))
     .WithName("Strategies")
-    .WithTags("Справочники")
-    .WithSummary("Список стратегий нарезки")
-    .WithDescription("Допустимые значения поля `strategy`: `fixed`, `recursive`, `paragraph`, `semantic`.")
+    .WithTags("Reference")
+    .WithSummary("List of chunking strategies")
+    .WithDescription("Allowed `strategy` values: `fixed`, `recursive`, `paragraph`, `semantic`.")
     .Produces<StrategiesResponse>(StatusCodes.Status200OK);
 
-// Не-потоковая нарезка: весь текст в памяти, ответ — все чанки + статистика.
+// Non-streaming chunking: the whole text is held in memory; the response contains all chunks + stats.
 api.MapPost("/chunk", async (ChunkRequest request, ChunkingEngine engine, HttpContext http) =>
 {
     try
@@ -84,11 +84,11 @@ api.MapPost("/chunk", async (ChunkRequest request, ChunkingEngine engine, HttpCo
 })
     .AddEndpointFilter<SemanticApiKeyFilter>()
     .WithName("Chunk")
-    .WithTags("Нарезка")
-    .WithSummary("Нарезать текст на чанки")
+    .WithTags("Chunking")
+    .WithSummary("Chunk text into pieces")
     .WithDescription(
-        "Режет `text` выбранной стратегией и возвращает все чанки с агрегированной статистикой. " +
-        "Для `strategy=semantic` нужен доступный сервер эмбеддингов (llama.cpp) или `provider=hash`.")
+        "Splits `text` with the selected strategy and returns all chunks with aggregated statistics. " +
+        "For `strategy=semantic`, an available embedding server (llama.cpp) or `provider=hash` is required.")
     .Accepts<ChunkRequest>("application/json")
     .Produces<ChunkResponse>(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status400BadRequest)
@@ -96,7 +96,7 @@ api.MapPost("/chunk", async (ChunkRequest request, ChunkingEngine engine, HttpCo
     .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
     .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-// Загрузка файла (.txt/.md/.markdown) как multipart/form-data.
+// File upload (.txt/.md/.markdown) as multipart/form-data.
 api.MapPost("/chunk/file", async (
     IFormFile? file,
     [FromForm] FileChunkForm? form,
@@ -122,11 +122,11 @@ api.MapPost("/chunk/file", async (
     {
         if (exception is ArgumentException or PayloadTooLargeException or UnsupportedMediaTypeException or TokenizerLoadException or OperationCanceledException)
         {
-            logger.LogDebug(exception, "Ошибка валидации загрузки файла");
+            logger.LogDebug(exception, "File upload validation error");
         }
         else
         {
-            logger.LogError(exception, "Неожиданная ошибка загрузки файла");
+            logger.LogError(exception, "Unexpected file upload error");
         }
 
         return ApiErrors.ToResult(exception);
@@ -135,12 +135,12 @@ api.MapPost("/chunk/file", async (
     .AddEndpointFilter<SemanticApiKeyFilter>()
     .DisableAntiforgery()
     .WithName("ChunkFile")
-    .WithTags("Нарезка")
-    .WithSummary("Нарезать загруженный файл")
+    .WithTags("Chunking")
+    .WithSummary("Chunk an uploaded file")
     .WithDescription(
-        "Принимает `multipart/form-data`: часть `file` (`.txt`, `.md`, `.markdown`) и опции нарезки " +
-        "как form-поля. Для `semantic` доступны плоские поля `embedding*` и `semantic*` " +
-        "либо JSON-строки `embedding` / `semantic`.")
+        "Accepts `multipart/form-data`: a `file` part (`.txt`, `.md`, `.markdown`) and chunking options " +
+        "as form fields. For `semantic`, the flat fields `embedding*` and `semantic*` are available, " +
+        "or the JSON strings `embedding` / `semantic`.")
     .Produces<ChunkResponse>(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status400BadRequest)
     .ProducesProblem(StatusCodes.Status413PayloadTooLarge)
@@ -148,7 +148,7 @@ api.MapPost("/chunk/file", async (
     .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
     .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-// Потоковая нарезка: application/x-ndjson, по одному чанку на строку.
+// Streaming chunking: application/x-ndjson, one chunk per line.
 api.MapPost("/chunk/stream", async (
     ChunkRequest request,
     ChunkingEngine engine,
@@ -159,8 +159,8 @@ api.MapPost("/chunk/stream", async (
     {
         ChunkSession session = engine.CreateSession(request);
 
-        // Semantic работает в document-mode: строим план и чанки до отправки заголовков,
-        // чтобы ошибки провайдера/лимита вернулись как 503/413, а не пустой 200.
+        // Semantic runs in document mode: build the plan and chunks before sending headers,
+        // so provider/limit errors are returned as 503/413 instead of an empty 200.
         if (session.Service.RequiresPreplanning)
         {
             ChunkResult result = await engine.RunAsync(session, http.RequestAborted);
@@ -210,7 +210,7 @@ api.MapPost("/chunk/stream", async (
                 }
                 catch (Exception exception)
                 {
-                    // Пробрасываем ошибку читателю через канал, иначе поток молча оборвётся.
+                    // Propagate the error to the reader through the channel; otherwise the stream ends silently.
                     channel.Writer.TryComplete(exception);
                 }
             }, CancellationToken.None);
@@ -235,11 +235,11 @@ api.MapPost("/chunk/stream", async (
             }
             catch (OperationCanceledException)
             {
-                // Клиент отключился — штатное завершение.
+                // The client disconnected — normal termination.
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Ошибка записи потокового ответа");
+                logger.LogError(exception, "Streaming response write error");
             }
             finally
             {
@@ -254,7 +254,7 @@ api.MapPost("/chunk/stream", async (
                 }
                 catch (Exception exception)
                 {
-                    logger.LogError(exception, "Ошибка нарезки в потоковом режиме");
+                    logger.LogError(exception, "Streaming chunking error");
                 }
 
                 try
@@ -263,7 +263,7 @@ api.MapPost("/chunk/stream", async (
                 }
                 catch (Exception)
                 {
-                    // Ответ уже закрыт клиентом.
+                    // The response is already closed by the client.
                 }
             }
         }, "application/x-ndjson; charset=utf-8");
@@ -275,12 +275,12 @@ api.MapPost("/chunk/stream", async (
 })
     .AddEndpointFilter<SemanticApiKeyFilter>()
     .WithName("ChunkStream")
-    .WithTags("Нарезка")
-    .WithSummary("Потоковая нарезка (NDJSON)")
+    .WithTags("Chunking")
+    .WithSummary("Streaming chunking (NDJSON)")
     .WithDescription(
-        "Возвращает `application/x-ndjson`: по одному JSON-чанку на строку. " +
-        "Для `strategy=semantic` чанки формируются до отправки заголовков, поэтому ошибки " +
-        "провайдера и лимита приходят как 503/413, а не как оборванный поток.")
+        "Returns `application/x-ndjson`: one JSON chunk per line. " +
+        "For `strategy=semantic`, chunks are built before the headers are sent, so provider " +
+        "and limit errors arrive as 503/413 rather than a broken stream.")
     .Accepts<ChunkRequest>("application/json")
     .Produces<Chunk>(StatusCodes.Status200OK, "application/x-ndjson")
     .ProducesProblem(StatusCodes.Status400BadRequest)

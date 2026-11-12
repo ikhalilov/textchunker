@@ -3,7 +3,7 @@ using TextChunker.Chunking.Semantic;
 
 namespace TextChunker.Chunking;
 
-/// <summary>Фабрика стратегий нарезки по имени <c>--strategy</c>.</summary>
+/// <summary>Factory of chunking strategies by the <c>--strategy</c> name.</summary>
 public static class ChunkerFactory
 {
     public static readonly IReadOnlyList<string> SupportedStrategies = new[]
@@ -11,10 +11,10 @@ public static class ChunkerFactory
         "fixed", "recursive", "paragraph", "semantic"
     };
 
-    /// <summary>Стратегия, требующая внешних эмбеддингов (document-mode).</summary>
+    /// <summary>Strategy that requires external embeddings (document mode).</summary>
     public const string SemanticStrategyName = "semantic";
 
-    /// <summary>Создать стратегию; неизвестное имя — <see cref="ArgumentOutOfRangeException"/> (exit 2).</summary>
+    /// <summary>Create a strategy; an unknown name yields <see cref="ArgumentOutOfRangeException"/> (exit 2).</summary>
     public static IChunker Create(string? strategy)
     {
         string key = string.IsNullOrWhiteSpace(strategy)
@@ -34,7 +34,7 @@ public static class ChunkerFactory
         };
     }
 
-    /// <summary>true — стратегия требует семантического плана (эмбеддингов).</summary>
+    /// <summary>true — the strategy requires a semantic plan (embeddings).</summary>
     public static bool RequiresEmbeddings(string? strategy)
     {
         string key = string.IsNullOrWhiteSpace(strategy) ? "recursive" : strategy.Trim().ToLowerInvariant();

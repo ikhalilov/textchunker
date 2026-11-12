@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace TextChunker.Api.Tests;
 
-/// <summary>OpenAPI-документ и Scalar UI.</summary>
+/// <summary>OpenAPI document and Scalar UI.</summary>
 public sealed class ApiDocsTests(ApiServerFixture fixture) : IClassFixture<ApiServerFixture>{
     private readonly ApiServerFixture _fixture = fixture;
 
@@ -35,7 +35,7 @@ public sealed class ApiDocsTests(ApiServerFixture fixture) : IClassFixture<ApiSe
             Assert.True(paths.TryGetProperty(path, out _), $"в OpenAPI нет {path}");
         }
 
-        // Служебный редирект корня не должен попадать в описание.
+        // The service redirect of the root must not appear in the description.
         Assert.False(paths.TryGetProperty("/", out _));
     }
 

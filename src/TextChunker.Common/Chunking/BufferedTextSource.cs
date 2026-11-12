@@ -3,8 +3,8 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking;
 
 /// <summary>
-/// Источник над уже прочитанным текстом: нужен семантической стратегии, работающей
-/// в document-mode после буферизации. Смещения — в join-пространстве («\n»).
+/// Source over already-read text: needed by the semantic strategy running
+/// in document mode after buffering. Offsets are in the joined space ("\n").
 /// </summary>
 internal sealed class BufferedTextSource : ITextSource
 {

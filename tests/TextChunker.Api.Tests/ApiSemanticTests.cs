@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace TextChunker.Api.Tests;
 
-/// <summary>Семантическая стратегия через API (офлайн-провайдер hash).</summary>
+/// <summary>Semantic strategy through the API (offline hash provider).</summary>
 public sealed class ApiSemanticTests(ApiServerFixture fixture) : IClassFixture<ApiServerFixture>
 {
     private readonly ApiServerFixture _fixture = fixture;

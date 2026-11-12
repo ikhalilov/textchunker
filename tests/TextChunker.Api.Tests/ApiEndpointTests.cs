@@ -348,7 +348,7 @@ public sealed class ApiEndpointTests(ApiServerFixture fixture) : IClassFixture<A
     [Fact]
     public async Task UploadWithWindows1251EncodingIsDecoded()
     {
-        // ASCII-байты одинаковы в cp1251; проверяем, что кодировка принимается и файл читается.
+        // ASCII bytes are the same in cp1251; we verify that the encoding is accepted and the file is read.
         using MultipartFormDataContent form = CreateFileForm(
             "cp.txt",
             Encoding.ASCII.GetBytes("hello world"),

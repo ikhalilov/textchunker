@@ -3,7 +3,7 @@ using TextChunker.Tokenizers;
 
 namespace TextChunker.Tests;
 
-/// <summary>Unit-тесты базовых токенизаторов: char (rune/эмодзи), word, regex, none.</summary>
+/// <summary>Unit tests for the basic tokenizers: char (rune/emoji), word, regex, none.</summary>
 public sealed class CharTokenizerTests
 {
     private readonly CharTokenizer _tokenizer = new();
@@ -61,7 +61,7 @@ public sealed class CharTokenizerTests
     }
 }
 
-/// <summary>Unit-тесты word-токенизатора (токен = отрезок не-пробельных символов).</summary>
+/// <summary>Unit tests for the word tokenizer (a token = a run of non-whitespace characters).</summary>
 public sealed class WordTokenizerTests
 {
     private readonly WordTokenizer _tokenizer = new();
@@ -104,7 +104,7 @@ public sealed class WordTokenizerTests
     public void CutOnEmptyTextIsNull() => Assert.Null(_tokenizer.CutAtTokenBoundary("", 1));
 }
 
-/// <summary>Unit-тесты regex-токенизатора (совпадения `[\p{L}\p{N}]+`).</summary>
+/// <summary>Unit tests for the regex tokenizer (matches of `[\p{L}\p{N}]+`).</summary>
 public sealed class RegexTokenizerTests
 {
     private readonly RegexTokenizer _tokenizer = new();
@@ -144,7 +144,7 @@ public sealed class RegexTokenizerTests
     public void CutOnEmptyTextIsNull() => Assert.Null(_tokenizer.CutAtTokenBoundary("", 1));
 }
 
-/// <summary>Unit-тесты токенизатора `none` (лимит по токенам отключён).</summary>
+/// <summary>Unit tests for the `none` tokenizer (the token limit is disabled).</summary>
 public sealed class NullTokenizerTests
 {
     private readonly NullTokenizer _tokenizer = new();
@@ -164,7 +164,7 @@ public sealed class NullTokenizerTests
     public void CutOnEmptyTextIsNull() => Assert.Null(_tokenizer.CutAtTokenBoundary("", 0));
 }
 
-/// <summary>Фабрика: имена, регистр/пробелы, неизвестное имя, значение по умолчанию.</summary>
+/// <summary>Factory: names, case/spaces, unknown name, default value.</summary>
 public sealed class TokenizerFactoryTests
 {
     [Fact]
@@ -214,7 +214,7 @@ public sealed class TokenizerFactoryTests
     }
 }
 
-/// <summary>Финальный пересчёт токенов собранного чанка (prefix + text).</summary>
+/// <summary>Final token recount of an assembled chunk (prefix + text).</summary>
 public sealed class ChunkTokenCountTests
 {
     [Fact]

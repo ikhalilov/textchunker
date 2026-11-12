@@ -6,21 +6,21 @@ using TextChunker.Abstractions.Embeddings;
 namespace TextChunker.Embeddings;
 
 /// <summary>
-/// Фабрика провайдеров эмбеддингов: сопоставляет <c>--embedding-provider</c> с реализацией,
-/// подставляет API-ключ из переменной окружения и оборачивает провайдер дисковым кэшем.
+/// Factory of embedding providers: maps <c>--embedding-provider</c> to an implementation,
+/// substitutes the API key from the environment variable and wraps the provider in a disk cache.
 /// </summary>
 public static class EmbeddingProviderFactory
 {
-    /// <summary>Поддерживаемые значения <c>--embedding-provider</c>.</summary>
+    /// <summary>Supported values of <c>--embedding-provider</c>.</summary>
     public static readonly IReadOnlyList<string> SupportedNames = new[]
     {
         "llama-cpp", "hash"
     };
 
-    /// <summary>Провайдер по умолчанию.</summary>
+    /// <summary>Default provider.</summary>
     public const string DefaultProviderName = "llama-cpp";
 
-    /// <summary>Переменная окружения с API-ключом (из тела запроса ключ не принимается).</summary>
+    /// <summary>Environment variable holding the API key (the key is not accepted from the request body).</summary>
     public const string ApiKeyEnvironmentVariable = "TEXTCHUNKER_EMBEDDING_API_KEY";
 
     public static IEmbeddingProvider Create(EmbeddingOptions options)
@@ -48,7 +48,7 @@ public static class EmbeddingProviderFactory
             return provider;
         }
 
-        // Автоочистка: если заданы TTL/лимит, приводим кэш в порядок перед прогоном.
+        // Automatic cleanup: if a TTL/limit is set, bring the cache in order before the run.
         if (options.CacheMaxBytes is not null || options.CacheTtlDays is not null)
         {
             try
@@ -61,7 +61,7 @@ public static class EmbeddingProviderFactory
             catch (Exception exception) when (
                 exception is IOException or UnauthorizedAccessException or ArgumentException)
             {
-                // Обслуживание кэша не должно прерывать нарезку.
+                // Cache maintenance must not interrupt chunking.
             }
         }
 
@@ -73,8 +73,8 @@ public static class EmbeddingProviderFactory
     }
 
     /// <summary>
-    /// Scope кэша llama.cpp: модель + endpoint + размерность. Одно имя модели на разных
-    /// серверах/квантованиях не должно приводить к переиспользованию чужих векторов.
+    /// llama.cpp cache scope: model + endpoint + dimensionality. The same model name on different
+    /// servers/quantizations must not lead to reusing someone else's vectors.
     /// </summary>
     private static string BuildLlamaCppScope(EmbeddingOptions options, int dimensions)
     {
@@ -85,7 +85,7 @@ public static class EmbeddingProviderFactory
         return $"{model}-{suffix}";
     }
 
-    /// <summary>Ключ берётся из опции (заполняется из окружения), иначе из <see cref="ApiKeyEnvironmentVariable"/>.</summary>
+    /// <summary>The key is taken from the option (populated from the environment), otherwise from <see cref="ApiKeyEnvironmentVariable"/>.</summary>
     private static string? ResolveApiKey(EmbeddingOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.ApiKey))

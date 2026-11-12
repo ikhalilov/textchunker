@@ -1,20 +1,20 @@
 namespace TextChunker.Api.Services;
 
 /// <summary>
-/// Настройки интерактивной документации API (секция <c>ApiDocs</c>):
-/// OpenAPI-документ и UI Scalar.
+/// Settings for the interactive API documentation (the <c>ApiDocs</c> section):
+/// the OpenAPI document and the Scalar UI.
 /// </summary>
 public sealed class ApiDocsOptions
 {
-    /// <summary>true — публиковать OpenAPI и Scalar (по умолчанию включено).</summary>
+    /// <summary>true — publish OpenAPI and Scalar (enabled by default).</summary>
     public bool Enabled { get; set; } = true;
 
-    /// <summary>Маршрут Scalar UI.</summary>
+    /// <summary>Scalar UI route.</summary>
     public string Route { get; set; } = "/scalar";
 
-    /// <summary>Маршрут OpenAPI-документа; обязан содержать <c>{documentName}</c>.</summary>
+    /// <summary>OpenAPI document route; must contain <c>{documentName}</c>.</summary>
     public string OpenApiRoute { get; set; } = "/openapi/{documentName}.json";
 
-    /// <summary>Заголовок документации.</summary>
+    /// <summary>Documentation title.</summary>
     public string Title { get; set; } = "TextChunker API";
 }

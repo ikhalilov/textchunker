@@ -3,9 +3,9 @@ using TextChunker.Abstractions;
 namespace TextChunker.Chunking.Semantic;
 
 /// <summary>
-/// Стратегия, которой нужен заранее построенный <see cref="SemanticPlan"/>:
-/// <see cref="ChunkingService"/> строит план асинхронно (с эмбеддингами)
-/// и передаёт его сюда перед вызовом <see cref="IChunker.Chunk"/>.
+/// Strategy that needs a pre-built <see cref="SemanticPlan"/>:
+/// <see cref="ChunkingService"/> builds the plan asynchronously (with embeddings)
+/// and passes it here before calling <see cref="IChunker.Chunk"/>.
 /// </summary>
 public interface ISemanticPlanAware
 {
@@ -13,11 +13,11 @@ public interface ISemanticPlanAware
 }
 
 /// <summary>
-/// Семантическая нарезка: собирает атомы в чанки так, чтобы чанк заканчивался на
-/// осмысленной границе и гарантированно влезал в лимит активной единицы.
-/// Границы берутся из <see cref="SemanticPlan"/>; группа закрывается и при переполнении
-/// лимита. Атом, который сам не влезает в лимит, дробится жёстко по границам токенов.
-/// Перекрытие набирается целыми атомами, поэтому предложения не рвутся.
+/// Semantic chunking: gathers atoms into chunks so that a chunk ends at
+/// a meaningful boundary and always fits the limit of the active unit.
+/// Boundaries come from <see cref="SemanticPlan"/>; a group is also closed when the
+/// limit is exceeded. An atom that does not fit the limit by itself is split hard at token boundaries.
+/// Overlap is collected from whole atoms, so sentences are never cut.
 /// </summary>
 public sealed class SemanticChunker : IChunker, ISemanticPlanAware
 {
@@ -36,8 +36,8 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
             return ChunkSplit.Empty;
         }
 
-        // Семантические смещения относятся ко всему документу: до EOF ничего не режем,
-        // иначе границы атомов не совпадут с текущим (частичным) буфером.
+        // Semantic offsets refer to the whole document: nothing is cut before EOF,
+        // otherwise atom boundaries would not match the current (partial) buffer.
         if (!final)
         {
             return ChunkSplit.NeedMore;
@@ -59,7 +59,7 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
 
         for (int i = 1; i < atoms.Count; i++)
         {
-            // Новая семантическая секция или переполнение лимита закрывают группу.
+            // A new semantic section or exceeding the limit closes the group.
             bool startsSection = plan.StartsNewChunk(i);
             bool fits = !startsSection && measure.Count(Span(text, atoms, groupStart, i)) <= max;
             if (fits)
@@ -83,7 +83,7 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
         };
     }
 
-    /// <summary>Текст от начала атома <paramref name="from"/> до конца атома <paramref name="to"/>.</summary>
+    /// <summary>Text from the start of atom <paramref name="from"/> to the end of atom <paramref name="to"/>.</summary>
     private static string Span(string text, IReadOnlyList<SemanticAtom> atoms, int from, int to)
     {
         int start = atoms[from].Start;
@@ -92,8 +92,8 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
     }
 
     /// <summary>
-    /// Начало следующей группы: хвост предыдущей, набранный целыми атомами
-    /// в пределах перекрытия. Всегда продвигает вперёд (не меньше <paramref name="nextAtom"/>).
+    /// Start of the next group: the tail of the previous one, collected from whole atoms
+    /// within the overlap. Always advances forward (not less than <paramref name="nextAtom"/>).
     /// </summary>
     private static int NextGroupStart(
         string text,
@@ -121,13 +121,13 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
             candidateStart = candidate;
         }
 
-        // Перекрытие набирается целыми атомами; если в overlap помещается вся группа,
-        // повторяем её целиком (стандартная семантика overlap). Прогресс гарантирован:
-        // цикл продолжается со следующего атома.
+        // Overlap is collected from whole atoms; if the entire group fits into the overlap,
+        // it is repeated in full (standard overlap semantics). Progress is guaranteed:
+        // the loop continues from the next atom.
         return candidateStart;
     }
 
-    /// <summary>Выдача группы; если она не влезает — жёсткий дробление по лимиту.</summary>
+    /// <summary>Emits a group; if it does not fit, applies a hard split by the limit.</summary>
     private static void EmitGroup(
         string text,
         IReadOnlyList<SemanticAtom> atoms,
@@ -172,8 +172,8 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
     }
 
     /// <summary>
-    /// Жёсткий рез выравниваем на границу слова: если последний пробел перед <paramref name="cut"/>
-    /// отрезает не меньше половины куска, режем по нему — иначе остаются обрывки вроде «во»/«ду.».
+    /// A hard cut is aligned to a word boundary: if the last whitespace before <paramref name="cut"/>
+    /// cuts off at least half of the piece, the cut is made there — otherwise fragments like "во"/"ду." remain.
     /// </summary>
     private static int PreferWordBoundary(string text, int start, int cut, int end)
     {
@@ -188,7 +188,7 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
             if (char.IsWhiteSpace(text[i]))
             {
                 int boundary = i + 1;
-                // Не выходим за пределы: правый край пробелов остаётся разделителем.
+                // Do not go past the limits: the right edge of the whitespace remains a separator.
                 while (boundary < cut && char.IsWhiteSpace(text[boundary]))
                 {
                     boundary++;

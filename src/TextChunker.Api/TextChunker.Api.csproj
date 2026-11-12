@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.2.0</Version>
-    <Description>HTTP API (ASP.NET Core Minimal APIs) для TextChunker.</Description>
+    <Description>HTTP API (ASP.NET Core Minimal APIs) for TextChunker.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>

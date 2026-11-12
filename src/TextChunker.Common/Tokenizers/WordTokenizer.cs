@@ -3,11 +3,11 @@ namespace TextChunker.Tokenizers;
 using TextChunker.Abstractions;
 
 /// <summary>
-/// Токенизатор «word»: токен = максимальный отрезок не-пробельных символов
-/// (напросток — "word count", `awk '{print NF}'`). Точный подсчёт слов,
-/// но приближённый к токенам модели; в CLI с ним выдаётся warning «approximate».
-/// Пустой/пробельный текст — 0 токенов.
-/// Граница — UTF-16 CharIndex начала n-го слова (0-based); n >= count → текст.Length.
+/// The "word" tokenizer: a token is the longest run of non-whitespace characters
+/// (simply put — "word count", `awk '{print NF}'`). It counts words exactly,
+/// but only approximates model tokens; the CLI reports an "approximate" warning for it.
+/// Empty/whitespace-only text is 0 tokens.
+/// A boundary is the UTF-16 CharIndex of the start of the n-th word (0-based); n >= count → text.Length.
 /// </summary>
 public sealed class WordTokenizer : ITokenizer
 {

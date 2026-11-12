@@ -1,24 +1,24 @@
 namespace TextChunker.Api.Contracts;
 
-/// <summary>Запрос на нарезку текста. Все параметры, кроме <see cref="Text"/>, опциональны.</summary>
+/// <summary>Text chunking request. All parameters except <see cref="Text"/> are optional.</summary>
 public sealed record ChunkRequest
 {
-    /// <summary>Входной текст (обязателен).</summary>
+    /// <summary>Input text (required).</summary>
     public string? Text { get; init; }
 
-    /// <summary>Стратегия: fixed | recursive | paragraph | semantic (по умолчанию recursive).</summary>
+    /// <summary>Strategy: fixed | recursive | paragraph | semantic (default: recursive).</summary>
     public string? Strategy { get; init; }
 
-    /// <summary>Токенизатор: none | char | word | regex | huggingface (по умолчанию word).</summary>
+    /// <summary>Tokenizer: none | char | word | regex | huggingface (default: word).</summary>
     public string? Tokenizer { get; init; }
 
-    /// <summary>HF-модель или путь к tokenizer.json.</summary>
+    /// <summary>HuggingFace model or path to tokenizer.json.</summary>
     public string? TokenizerModel { get; init; }
 
-    /// <summary>Явный путь к локальному tokenizer.json (приоритетнее TokenizerModel).</summary>
+    /// <summary>Explicit path to a local tokenizer.json (takes precedence over TokenizerModel).</summary>
     public string? TokenizerPath { get; init; }
 
-    /// <summary>Каталог кэша tokenizer.json (переопределяет конфигурацию сервера).</summary>
+    /// <summary>tokenizer.json cache directory (overrides the server configuration).</summary>
     public string? TokenizerCacheDir { get; init; }
 
     public string? Prefix { get; init; }
@@ -38,18 +38,18 @@ public sealed record ChunkRequest
     public bool Trim { get; init; } = true;
     public bool DropSmall { get; init; }
 
-    /// <summary>Разделители recursive (литеральные строки, по убыванию приоритета).</summary>
+    /// <summary>Recursive separators (literal strings, in descending priority order).</summary>
     public string[]? Separators { get; init; }
 
-    /// <summary>Пользовательские метаданные (произвольный JSON-объект).</summary>
+    /// <summary>User metadata (arbitrary JSON object).</summary>
     public Dictionary<string, object?>? Metadata { get; init; }
 
-    /// <summary>Метка источника; попадает в top-level `source` и `id` (по умолчанию "api").</summary>
+    /// <summary>Source label; lands in the top-level `source` and `id` (default: "api").</summary>
     public string? Source { get; init; }
 
-    /// <summary>Параметры эмбеддингов (только для strategy = "semantic").</summary>
+    /// <summary>Embedding parameters (only for strategy = "semantic").</summary>
     public EmbeddingRequest? Embedding { get; init; }
 
-    /// <summary>Параметры семантических границ (только для strategy = "semantic").</summary>
+    /// <summary>Semantic boundary parameters (only for strategy = "semantic").</summary>
     public SemanticRequest? Semantic { get; init; }
 }

@@ -1,12 +1,12 @@
 namespace TextChunker.Abstractions.Embeddings;
 
 /// <summary>
-/// Ошибка провайдера эмбеддингов (сервер недоступен, таймаут, невалидный ответ,
-/// неверная размерность). CLI переводит в stderr + exit code 5, API — в HTTP 503.
+/// Embedding provider failure (server unavailable, timeout, invalid response,
+/// wrong dimension). The CLI maps it to stderr + exit code 5, the API to HTTP 503.
 /// </summary>
 public sealed class EmbeddingProviderException(string message, Exception? innerException = null)
     : Exception(message, innerException)
 {
-    /// <summary>Код завершения CLI для этой ошибки.</summary>
+    /// <summary>CLI exit code for this error.</summary>
     public int ExitCode => 5;
 }

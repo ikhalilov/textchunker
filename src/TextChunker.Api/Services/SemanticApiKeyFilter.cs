@@ -5,15 +5,15 @@ using TextChunker.Api.Contracts;
 namespace TextChunker.Api.Services;
 
 /// <summary>
-/// Проверяет заголовок <c>X-API-Key</c> для semantic-запросов, если на сервере задана
-/// переменная <c>TEXTCHUNKER_EMBEDDING_API_KEY</c>.
+/// Validates the <c>X-API-Key</c> header for semantic requests when the
+/// <c>TEXTCHUNKER_EMBEDDING_API_KEY</c> variable is set on the server.
 /// </summary>
 public sealed class SemanticApiKeyFilter : IEndpointFilter
 {
-    /// <summary>Проверяет наличие и корректность <c>X-API-Key</c> для semantic-запросов.</summary>
-    /// <param name="context">Контекст вызова endpoint-фильтра.</param>
-    /// <param name="next">Следующий делегат в конвейере.</param>
-    /// <returns>Результат следующего делегата или 401 при отсутствии ключа.</returns>
+    /// <summary>Validates the presence and correctness of <c>X-API-Key</c> for semantic requests.</summary>
+    /// <param name="context">The invocation context of the endpoint filter.</param>
+    /// <param name="next">The next delegate in the pipeline.</param>
+    /// <returns>The result of the next delegate, or 401 when the key is missing.</returns>
     public async ValueTask<object?> InvokeAsync(
         EndpointFilterInvocationContext context,
         EndpointFilterDelegate next)

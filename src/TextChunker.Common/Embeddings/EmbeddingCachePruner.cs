@@ -1,6 +1,6 @@
 namespace TextChunker.Embeddings;
 
-/// <summary>Результат обслуживания дискового кэша эмбеддингов.</summary>
+/// <summary>Result of disk embedding cache maintenance.</summary>
 public sealed record CachePruneResult(
     string Root,
     int Scanned,
@@ -15,8 +15,8 @@ public sealed record CachePruneResult(
 }
 
 /// <summary>
-/// Обслуживание кэша: удаляет записи старше TTL и, если задан лимит, самые старые
-/// записи до достижения лимита. Без лимитов и TTL ничего не делает.
+/// Cache maintenance: deletes records older than the TTL and, if a limit is set, the oldest
+/// records until the limit is reached. Without limits and TTL it does nothing.
 /// </summary>
 public static class EmbeddingCachePruner
 {
@@ -97,7 +97,7 @@ public static class EmbeddingCachePruner
             {
                 if (bytesAfter <= limit || i == ordered.Count - 1)
                 {
-                    // Не удаляем последнюю запись: кэш не должен становиться пустым.
+                    // Do not delete the last record: the cache must not become empty.
                     break;
                 }
 

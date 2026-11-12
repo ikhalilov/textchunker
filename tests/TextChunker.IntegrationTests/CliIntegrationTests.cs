@@ -5,9 +5,9 @@ using System.Text.Json;
 namespace TextChunker.IntegrationTests;
 
 /// <summary>
-/// Интеграционные тесты CLI: коды завершения, валидный JSONL в stdout, ошибки в stderr,
-/// stdin, --stats, --format text, отсутствие BOM в файле вывода.
-/// Запускают реальный процесс <c>dotnet TextChunker.dll</c> из каталога тестовой сборки.
+/// Integration tests for the CLI: exit codes, valid JSONL on stdout, errors on stderr,
+/// stdin, --stats, --format text, absence of BOM in the output file.
+/// They start the real <c>dotnet TextChunker.dll</c> process from the test build directory.
 /// </summary>
 public sealed class CliIntegrationTests
 {

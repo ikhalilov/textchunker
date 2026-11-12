@@ -2,7 +2,7 @@ using TextChunker.Abstractions;
 
 namespace TextChunker.Sources;
 
-/// <summary>Источник текста из файла (потоковое чтение, BOM, кодировка).</summary>
+/// <summary>Text source from a file (streaming read, BOM, encoding).</summary>
 public sealed class FileTextSource : ITextSource, IDisposable
 {
     private readonly Stream _stream;
@@ -10,7 +10,7 @@ public sealed class FileTextSource : ITextSource, IDisposable
     private StreamReader? _reader;
     private bool _disposed;
 
-    /// <summary>Имя источника: имя файла (Path.GetFileName).</summary>
+    /// <summary>Source name: the file name (Path.GetFileName).</summary>
     public string SourceName { get; }
 
     private bool _bom;
@@ -42,8 +42,8 @@ public sealed class FileTextSource : ITextSource, IDisposable
         }
         catch
         {
-            // CreateReader бросил (например, exit 2 — невалидная кодировка):
-            // файл уже открыт — обязательно освобождаем, иначе путь будет заблокирован.
+            // CreateReader threw (for example, exit 2 — invalid encoding):
+            // the file is already open — it must be released, otherwise the path stays locked.
             stream.Dispose();
             throw;
         }
@@ -54,7 +54,7 @@ public sealed class FileTextSource : ITextSource, IDisposable
     public IEnumerable<(string Content, long StartChar, long EndChar)> Lines()
     {
         if (_disposed) throw new ObjectDisposedException(nameof(FileTextSource));
-        // DecoderFallbackException → TextSourceErrorException(4) перехватывается внутри TextLines.ReadLines.
+        // DecoderFallbackException → TextSourceErrorException(4) is caught inside TextLines.ReadLines.
         return TextLines.ReadLines(_reader!, _opts);
     }
 

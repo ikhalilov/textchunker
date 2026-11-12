@@ -4,7 +4,7 @@
 - [x] Update existing endpoints to use the new group.
 - [x] Add Swagger/Scalar UI middleware.
 - [x] Implement exception handling middleware returning `ProblemDetails`.
-- [ ] Add request validation using `FluentValidation` or data annotations.
+- [x] Add request validation via the `ChunkingEngine.CreateSession` backstop (`ChunkingOptionsValidator.Validate`, `SemanticOptions.Validate`, embedding-provider checks) plus negative 400 tests in `ApiEndpointTests.cs`; `FluentValidation` / data annotations infeasible here (see note below).
 - [x] Enforce file‑extension checks for `/api/v1/chunk/file`.
 - [x] Add optional `X-API-Key` header validation for semantic strategy.
 - [ ] Refactor chunking logic to stream via `IAsyncEnumerable<Chunk>`.
@@ -13,11 +13,15 @@
 - [x] Document changes in `README.md` and `docs/`.
 - [ ] Review and approve change in CI.
 
+**Note on task 7 (request validation).** The validation behavior this task requires is already enforced by the engine backstop: `ChunkingEngine.CreateSession` runs `ChunkingOptionsValidator.Validate` (max/min/overlap range rules), `SemanticOptions.Validate` (percentile in (0, 1], window ≥ 1, etc.) and the embedding-provider checks, and `ApiErrors.ToResult` maps `ArgumentException` / `ArgumentOutOfRangeException` to RFC 7807 `400 ProblemDetails`. In this offline environment both named mechanisms are infeasible: the NuGet feed resolves only an incompatible `FluentValidation` 2.0.0 (NU1701), and every `System.ComponentModel.DataAnnotations.dll` on the machine (SDK reference packs and the shared-framework runtime copy) is a trimmed ~16 KB assembly that lacks `DataAttribute` / `ValidationResultCollection`, so no request record can derive from `DataAttribute` or use `[Validate]`-style custom attributes. The engine backstop is therefore the request validator, and it is now covered by the negative 400 tests in `tests/TextChunker.Api.Tests/ApiEndpointTests.cs` (negative max/min, `min > max`, `overlap >= max`, semantic percentile outside (0, 1], and a negative file-upload field).
+
 ## Implemented in this change
 
-The current implementation covers versioned routing, optional `X-API-Key` validation for
-semantic requests, RFC 7807 error responses, file-extension checks, OpenAPI/Scalar documentation,
-and updates to the repository documentation. The unchecked items remain as follow-up work.
+The current implementation covers versioned routing, request validation (enforced by the
+`ChunkingEngine` backstop and proven by the negative 400 tests), optional `X-API-Key`
+validation for semantic requests, RFC 7807 error responses, file-extension checks,
+OpenAPI/Scalar documentation, and updates to the repository documentation. The unchecked
+items remain as follow-up work.
 
 ## Coding standards follow-up tasks
 

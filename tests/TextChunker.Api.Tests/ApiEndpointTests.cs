@@ -178,6 +178,64 @@ public sealed class ApiEndpointTests(ApiServerFixture fixture) : IClassFixture<A
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 
+    [Fact]
+    public async Task NegativeMaxTokensReturns400()
+    {
+        using HttpResponseMessage response = await Server.Client.PostAsJsonAsync(
+            "/api/v1/chunk", new { text = "abc", maxTokens = -1 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task NegativeMinCharsReturns400()
+    {
+        using HttpResponseMessage response = await Server.Client.PostAsJsonAsync(
+            "/api/v1/chunk", new { text = "abc", maxChars = 100, minChars = -1 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task MinGreaterThanMaxReturns400()
+    {
+        using HttpResponseMessage response = await Server.Client.PostAsJsonAsync(
+            "/api/v1/chunk", new { text = "abc", maxTokens = 100, minTokens = 200 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task OverlapGreaterThanEqualMaxReturns400()
+    {
+        using HttpResponseMessage response = await Server.Client.PostAsJsonAsync(
+            "/api/v1/chunk", new { text = "abc", maxTokens = 100, overlapTokens = 100 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task SemanticPercentileOutsideRangeReturns400()
+    {
+        using HttpResponseMessage zero = await Server.Client.PostAsJsonAsync(
+            "/api/v1/chunk",
+            new { text = "abc", strategy = "semantic", semantic = new { percentile = 0 } });
+
+        Assert.Equal(HttpStatusCode.BadRequest, zero.StatusCode);
+        Assert.Equal("application/problem+json", zero.Content.Headers.ContentType?.MediaType);
+
+        using HttpResponseMessage greaterThanOne = await Server.Client.PostAsJsonAsync(
+            "/api/v1/chunk",
+            new { text = "abc", strategy = "semantic", semantic = new { percentile = 1.5 } });
+
+        Assert.Equal(HttpStatusCode.BadRequest, greaterThanOne.StatusCode);
+        Assert.Equal("application/problem+json", greaterThanOne.Content.Headers.ContentType?.MediaType);
+    }
+
     private static MultipartFormDataContent CreateFileForm(
         string fileName,
         byte[] content,
@@ -317,5 +375,21 @@ public sealed class ApiEndpointTests(ApiServerFixture fixture) : IClassFixture<A
         using HttpResponseMessage response = await Server.Client.PostAsync("/api/v1/chunk/file", form);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UploadWithNegativeMaxCharsReturns400()
+    {
+        using MultipartFormDataContent form = CreateFileForm(
+            "neg.txt",
+            Encoding.UTF8.GetBytes("abcdefghij"),
+            ("strategy", "fixed"),
+            ("tokenizer", "char"),
+            ("maxChars", "-1"));
+
+        using HttpResponseMessage response = await Server.Client.PostAsync("/api/v1/chunk/file", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 }

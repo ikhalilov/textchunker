@@ -18,9 +18,12 @@ IChunker.Chunk(text, tokenizer, options, final)
         ▼
 Chunk  ──►  IChunkWriter (JSON Lines / text)
 
-Wrappers:
-  CLI (src/TextChunker)        ── file/stdin sources, JSONL/text, exit codes
+Wrappers (hosts):
+  CLI (src/TextChunker)        ── arg parsing, file/stdin sources, JSONL/text, exit codes
   API (src/TextChunker.Api)    ── Minimal APIs, in-memory source, JSON/NDJSON
+
+Engine (src/TextChunker.Common) holds Sources/, Tokenizers/, Chunking/,
+Writers/, Embeddings/; hosts reference Common + Abstractions only.
 ```
 
 ## Layers
@@ -110,7 +113,7 @@ Wrappers:
 ### API (`src/TextChunker.Api/`)
 
 - ASP.NET Core Minimal APIs (net10.0), references
-  `TextChunker`/`TextChunker.Abstractions`.
+  `TextChunker.Common`/`TextChunker.Abstractions`.
 - Routes grouped under `/api/v1` (`app.MapGroup`):
   `POST /api/v1/chunk` — JSON `{chunks, stats}`;
   `POST /api/v1/chunk/stream` — NDJSON (`application/x-ndjson`) via a bounded
@@ -165,14 +168,15 @@ if the buffer is non-empty the strategy either emits a chunk or returns
 ```
 textchunker/
 ├── src/TextChunker.Abstractions/   interfaces, Chunk, ChunkingOptions, ChunkTokenCount
-├── src/TextChunker/
+├── src/TextChunker.Common/         shared engine (net10.0 class library)
 │   ├── Sources/                    file/stdin, encodings, BOM, normalization
 │   ├── Tokenizers/                 none/char/word/regex/huggingface + factory
 │   ├── Chunking/                   strategies, SizeMeasure, service, validation
 │   ├── Writers/                    JSONL/text
-│   ├── Cli/                        CliRunner + Program.cs
-│   └── bin/, obj/                  build artifacts (gitignored)
+│   └── Embeddings/                 llama-cpp/hash providers, cache
+├── src/TextChunker/                CLI host: Cli/ + Program.cs (System.CommandLine)
 ├── src/TextChunker.Api/            Minimal APIs: contracts, services, Program.cs
+├── tools/SemanticCalibration/      semantic calibration tool (Common + Abstractions)
 ├── tests/TextChunker.Tests/        unit + property + cancellation
 ├── tests/TextChunker.IntegrationTests/  CLI processes, golden, load tests
 ├── tests/TextChunker.Api.Tests/    HTTP tests (Kestrel + HttpClient)

@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\TextChunker\TextChunker.csproj" />
+    <ProjectReference Include="..\..\src\TextChunker.Common\TextChunker.Common.csproj" />
   </ItemGroup>
 
 </Project>

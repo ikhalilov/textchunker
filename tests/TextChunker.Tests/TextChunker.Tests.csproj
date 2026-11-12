@@ -30,5 +30,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TextChunker.Abstractions\TextChunker.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\TextChunker\TextChunker.csproj" />
+    <ProjectReference Include="..\..\src\TextChunker.Common\TextChunker.Common.csproj" />
   </ItemGroup>
 </Project>

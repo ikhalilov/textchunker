@@ -10,7 +10,7 @@ This file contains a compact, **actionable** guide that helps future OpenCode ag
   - `src/TextChunker` – CLI (`TextChunker.exe`)
   - `src/TextChunker.Api` – Minimal‑API web service
   - `src/TextChunker.Abstractions` – shared interfaces and types
-- **Target framework**: `.NET 10` (runtime required for CLI & API, tests use the same SDK)
+- **Target framework**: `.NET 11` (runtime required for CLI & API, tests use the same SDK)
 - **Build artefacts**: `dotnet publish` outputs to `out/` (framework‑dependent) or `out/<rid>/` for cross‑platform builds.
 - **Tests**: xUnit v3 (`Microsoft.Testing.Platform`) – unit, integration, and API tests.
 - **Documentation**: `docs/` contains Markdown guides (`usage.md`, `chunking‑strategies.md`, etc.).

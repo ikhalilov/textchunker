@@ -1,6 +1,6 @@
 # TextChunker
 
-Cross-platform C# / .NET 10 console utility for streaming text chunking for RAG/vectorization.
+Cross-platform C# / .NET 11 console utility for streaming text chunking for RAG/vectorization.
 Reads from a file or `stdin`, splits by strategy
 (`fixed` / `recursive` / `paragraph` / `semantic`), measures size in tokens/characters/words/bytes,
 and writes JSON Lines (or plain text).

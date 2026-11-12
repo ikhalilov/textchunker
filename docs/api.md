@@ -1,6 +1,6 @@
 # HTTP API (Minimal APIs)
 
-The `src/TextChunker.Api` project uses ASP.NET Core Minimal APIs (net10.0).
+The `src/TextChunker.Api` project uses ASP.NET Core Minimal APIs (net11.0).
 It uses the same chunking engine (`ChunkingService`, strategies, tokenizers)
 as the CLI.
 

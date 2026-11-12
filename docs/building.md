@@ -58,7 +58,7 @@ Results (Debug, local machine) and memory estimates are in
 ## Publishing
 
 ```bash
-# framework-dependent (requires an installed .NET 10 Runtime)
+# framework-dependent (requires an installed .NET 11 Runtime)
 dotnet publish src/TextChunker -c Release -o out
 
 # cross-platform artifacts (framework-dependent)

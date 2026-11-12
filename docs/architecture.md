@@ -112,7 +112,7 @@ Writers/, Embeddings/; hosts reference Common + Abstractions only.
 
 ### API (`src/TextChunker.Api/`)
 
-- ASP.NET Core Minimal APIs (net10.0), references
+- ASP.NET Core Minimal APIs (net11.0), references
   `TextChunker.Common`/`TextChunker.Abstractions`.
 - Routes grouped under `/api/v1` (`app.MapGroup`):
   `POST /api/v1/chunk` — JSON `{chunks, stats}`;
@@ -168,7 +168,7 @@ if the buffer is non-empty the strategy either emits a chunk or returns
 ```
 textchunker/
 ├── src/TextChunker.Abstractions/   interfaces, Chunk, ChunkingOptions, ChunkTokenCount
-├── src/TextChunker.Common/         shared engine (net10.0 class library)
+├── src/TextChunker.Common/         shared engine (net11.0 class library)
 │   ├── Sources/                    file/stdin, encodings, BOM, normalization
 │   ├── Tokenizers/                 none/char/word/regex/huggingface + factory
 │   ├── Chunking/                   strategies, SizeMeasure, service, validation
@@ -194,8 +194,8 @@ textchunker/
 - API: launching a real `TextChunker.Api.dll` on a free port and HTTP
   checks (health, chunk, stream, 400/401/413/415/503, source/metadata,
   `X-API-Key`, tokenizer cache).
-- CI (`.github/workflows/ci.yml`): Ubuntu/Windows/macOS matrix, .NET 10
-  (`net10.0`, SDK for `.slnx`).
+- CI (`.github/workflows/ci.yml`): Ubuntu/Windows matrix, .NET 11
+  (`net11.0`, SDK for `.slnx`).
 
 ## Future Improvements
 

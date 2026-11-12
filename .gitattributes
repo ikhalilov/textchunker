@@ -1,0 +1,8 @@
+# Normalize line endings: LF in the repository and in the working tree.
+# Keeps the repo deterministic across Windows/macOS/Linux and stops the
+# "LF will be replaced by CRLF" churn caused by core.autocrlf=true.
+* text=auto eol=lf
+
+# Windows batch scripts must keep CRLF if they are added later.
+*.bat text eol=crlf
+*.cmd text eol=crlf

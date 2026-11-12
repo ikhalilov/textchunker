@@ -130,9 +130,9 @@ Writers/, Embeddings/; hosts reference Common + Abstractions only.
 - Errors — RFC 7807: 400 (validation), 401 (semantic without a key), 413
   (`MaxTextChars`/body), 415 (file extension), 503 (tokenizer or embedding
   provider), 500.
-- Documentation: Swashbuckle generates OpenAPI (`/openapi/v1.json`), Scalar
-  UI — `/scalar`; XML comments of contracts land in schema descriptions.
-  Enabled via the `ApiDocs` section.
+- Documentation: the built-in `Microsoft.AspNetCore.OpenApi` generates OpenAPI
+  (`/openapi/v1.json`), Scalar UI — `/scalar`; XML comments of contracts land
+  in schema descriptions. Enabled via the `ApiDocs` section.
 - Limitations: request text is not logged; no persistence and no background
   tasks.
 

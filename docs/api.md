@@ -100,7 +100,7 @@ curl -X POST http://localhost:5080/api/v1/chunk \
 ## Interactive Documentation (Scalar)
 
 - UI: `/scalar` (root `/` redirects to `/scalar`).
-- OpenAPI 3.0: `/openapi/v1.json` (Swashbuckle).
+- OpenAPI 3.2: `/openapi/v1.json` (built-in `Microsoft.AspNetCore.OpenApi`).
 - UI: [Scalar](https://scalar.com/); assets are served locally, no CDN.
 - The document is grouped under the OpenAPI tags `Справочники` and `Нарезка`,
   with summaries and schema descriptions taken from XML comments,

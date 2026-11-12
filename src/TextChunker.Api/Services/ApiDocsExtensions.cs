@@ -1,52 +1,43 @@
+using System.Reflection;
+
 using Microsoft.OpenApi;
 
 using Scalar.AspNetCore;
 
-using System.Reflection;
-
 namespace TextChunker.Api.Services;
 
-/// <summary>Подключение OpenAPI (Swashbuckle) и Scalar UI.</summary>
+/// <summary>Подключение встроенного OpenAPI (Microsoft.AspNetCore.OpenApi) и Scalar UI.</summary>
 public static class ApiDocsExtensions
 {
     public const string DocumentName = "v1";
-    private static readonly string[] setupAction =
-        [
-            "TextChunker.Api.xml",
-            "TextChunker.Abstractions.xml",
-            "TextChunker.xml"
-        ];
+
+    private const string Description =
+        "Нарезка текста на чанки для RAG: стратегии `fixed`, `recursive`, `paragraph` и `semantic`, " +
+        "токенизаторы, лимиты, `--prefix`, перекрытие, кодировки. Ответы — JSON или NDJSON; " +
+        "ошибки — `application/problem+json`.";
 
     public static IServiceCollection AddApiDocs(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ApiDocsOptions>(configuration.GetSection("ApiDocs"));
-
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen(options =>
+
+        ApiDocsOptions docs = configuration.GetSection("ApiDocs").Get<ApiDocsOptions>() ?? new ApiDocsOptions();
+        string version = (typeof(ApiDocsExtensions).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? "0.0.0").Split('+')[0];
+
+        services.AddOpenApi(DocumentName, options =>
         {
-            ApiDocsOptions docs = configuration.GetSection("ApiDocs").Get<ApiDocsOptions>() ?? new ApiDocsOptions();
-            string version = (typeof(ApiDocsExtensions).Assembly
-                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                ?? "0.0.0").Split('+')[0];
-
-            options.SwaggerDoc(DocumentName, new OpenApiInfo
+            options.AddDocumentTransformer((document, _, _) =>
             {
-                Title = docs.Title,
-                Version = version,
-                Description =
-                    "Нарезка текста на чанки для RAG: стратегии `fixed`, `recursive`, `paragraph` и `semantic`, " +
-                    "токенизаторы, лимиты, `--prefix`, перекрытие, кодировки. Ответы — JSON или NDJSON; " +
-                    "ошибки — `application/problem+json`."
-            });
-
-            foreach (string xml in setupAction)
-            {
-                string path = Path.Combine(AppContext.BaseDirectory, xml);
-                if (File.Exists(path))
+                document.Info = new OpenApiInfo
                 {
-                    options.IncludeXmlComments(path);
-                }
-            }
+                    Title = docs.Title,
+                    Version = version,
+                    Description = Description
+                };
+                return Task.CompletedTask;
+            });
         });
 
         return services;
@@ -67,7 +58,7 @@ public static class ApiDocsExtensions
                 "ApiDocs:OpenApiRoute должен содержать {documentName}, например /openapi/{documentName}.json.");
         }
 
-        app.MapSwagger(options.OpenApiRoute);
+        app.MapOpenApi(options.OpenApiRoute);
         app.MapScalarApiReference(options.Route, scalar =>
         {
             scalar

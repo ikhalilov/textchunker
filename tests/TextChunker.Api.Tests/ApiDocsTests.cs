@@ -83,12 +83,18 @@ public sealed class ApiDocsTests(ApiServerFixture fixture) : IClassFixture<ApiSe
     public async Task FileEndpointIsDescribedAsMultipartWithFilePart()
     {
         JsonElement document = await GetOpenApiAsync();
-        JsonElement body = document.GetProperty("paths").GetProperty("/api/v1/chunk/file")
+        JsonElement content = document.GetProperty("paths").GetProperty("/api/v1/chunk/file")
             .GetProperty("post").GetProperty("requestBody").GetProperty("content");
 
-        Assert.True(body.TryGetProperty("multipart/form-data", out JsonElement multipart));
+        Assert.True(content.TryGetProperty("multipart/form-data", out JsonElement multipart));
         Assert.Contains("\"file\"", multipart.GetRawText(), StringComparison.Ordinal);
-        Assert.Contains("binary", multipart.GetRawText(), StringComparison.Ordinal);
+
+        // The built-in OpenAPI generator references the file part as
+        // #/components/schemas/IFormFile, where it is described as a binary string.
+        JsonElement formFile = document.GetProperty("components").GetProperty("schemas")
+            .GetProperty("IFormFile");
+        Assert.Equal("string", formFile.GetProperty("type").GetString());
+        Assert.Equal("binary", formFile.GetProperty("format").GetString());
     }
 
     [Fact]

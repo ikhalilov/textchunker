@@ -1,5 +1,9 @@
 # api-design
 
+## Purpose
+
+Defines the public HTTP contract for the TextChunker API: versioned routing, RFC 7807 error responses, semantic API-key protection, request validation, file-upload restrictions, and interactive documentation.
+
 ## ADDED Requirements
 
 ### Requirement: Versioned API surface

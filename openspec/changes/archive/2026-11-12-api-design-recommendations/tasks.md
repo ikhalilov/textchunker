@@ -68,7 +68,7 @@ future-facing improvements.
 - [x] Add XML documentation to remaining public methods and types that still lack it. Added docs
   to `ChunkingEngine`, `ChunkSession`, `ChunkResult`, `ChunkResponse`, `ApiErrors`, and
   `SemanticApiKeyFilter`.
-- [ ] Evaluate a lightweight command-handler abstraction for future CLI commands.
-- [ ] Evaluate a repository abstraction if persistence is introduced.
-- [ ] Evaluate `ResourceManager` for localized log and error messages if localization is required.
+- [x] Evaluate a lightweight command-handler abstraction for future CLI commands. Deferred: the CLI has a single command; revisit if the command set grows.
+- [x] Evaluate a repository abstraction if persistence is introduced. Deferred: the project has no persistence.
+- [x] Evaluate `ResourceManager` for localized log and error messages if localization is required. Deferred: localization is not a current requirement.
 - [x] Re-run `dotnet build` and `dotnet test` after each follow-up change.

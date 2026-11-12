@@ -166,7 +166,7 @@ public sealed class SemanticCliTests
                 "--semantic-fallback", "error");
 
             Assert.Equal(2, result.ExitCode);
-            Assert.Contains("превышает лимит", result.StdErr, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("exceeds the semantic mode limit", result.StdErr, StringComparison.OrdinalIgnoreCase);
             Assert.Empty(ParseJsonLines(result.StdOut));
         }
         finally
@@ -320,7 +320,7 @@ public sealed class SemanticCliTests
                 "--embedding-dimensions", "-1");
 
             Assert.Equal(2, result.ExitCode);
-            Assert.Contains("размерность", result.StdErr, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Embedding dimensions cannot be negative", result.StdErr, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {

@@ -65,12 +65,12 @@ public sealed record EmbeddingOptions
     {
         if (string.IsNullOrWhiteSpace(Provider))
         {
-            throw new ArgumentOutOfRangeException(nameof(Provider), Provider, "provider эмбеддингов не задан.");
+            throw new ArgumentOutOfRangeException(nameof(Provider), Provider, "Embedding provider is not specified.");
         }
 
         if (BatchSize < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(BatchSize), BatchSize, "--embedding-batch-size должен быть не меньше 1.");
+            throw new ArgumentOutOfRangeException(nameof(BatchSize), BatchSize, "--embedding-batch-size must be at least 1.");
         }
 
         if (Concurrency < 1)
@@ -78,7 +78,7 @@ public sealed record EmbeddingOptions
             throw new ArgumentOutOfRangeException(
                 nameof(Concurrency),
                 Concurrency,
-                "--embedding-concurrency должен быть не меньше 1.");
+                "--embedding-concurrency must be at least 1.");
         }
 
         if (MaxBatchChars < 0)
@@ -86,22 +86,22 @@ public sealed record EmbeddingOptions
             throw new ArgumentOutOfRangeException(
                 nameof(MaxBatchChars),
                 MaxBatchChars,
-                "--embedding-max-batch-chars не может быть отрицательным.");
+                "--embedding-max-batch-chars cannot be negative.");
         }
 
         if (Dimensions < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(Dimensions), Dimensions, "Размерность эмбеддингов не может быть отрицательной.");
+            throw new ArgumentOutOfRangeException(nameof(Dimensions), Dimensions, "Embedding dimensions cannot be negative.");
         }
 
         if (MaxRetries < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(MaxRetries), MaxRetries, "Число повторов не может быть отрицательным.");
+            throw new ArgumentOutOfRangeException(nameof(MaxRetries), MaxRetries, "Retry count cannot be negative.");
         }
 
         if (Timeout <= TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(Timeout), Timeout, "Таймаут эмбеддингов должен быть больше нуля.");
+            throw new ArgumentOutOfRangeException(nameof(Timeout), Timeout, "Embedding timeout must be greater than zero.");
         }
 
         if (CacheMaxBytes is < 0)
@@ -109,7 +109,7 @@ public sealed record EmbeddingOptions
             throw new ArgumentOutOfRangeException(
                 nameof(CacheMaxBytes),
                 CacheMaxBytes,
-                "--embedding-cache-max-bytes не может быть отрицательным.");
+                "--embedding-cache-max-bytes cannot be negative.");
         }
 
         if (CacheTtlDays is < 0)
@@ -117,7 +117,7 @@ public sealed record EmbeddingOptions
             throw new ArgumentOutOfRangeException(
                 nameof(CacheTtlDays),
                 CacheTtlDays,
-                "--embedding-cache-ttl-days не может быть отрицательным.");
+                "--embedding-cache-ttl-days cannot be negative.");
         }
 
         string key = Provider.Trim().ToLowerInvariant();
@@ -129,7 +129,7 @@ public sealed record EmbeddingOptions
                 throw new ArgumentOutOfRangeException(
                     nameof(Endpoint),
                     Endpoint,
-                    "--embedding-endpoint должен быть абсолютным http(s)-URL.");
+                    "--embedding-endpoint must be an absolute http(s) URL.");
             }
         }
     }

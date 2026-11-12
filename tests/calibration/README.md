@@ -54,7 +54,7 @@ Useful flags:
 
 - RU/EN, Markdown headings, prose without headings, code fences, mixed
   languages;
-- short subheadings ("Охрана труда", "Сборы") and long paragraphs;
+- short subheadings and long paragraphs;
 - thematic shifts within paragraphs (stock market, a recipe, HR, law).
 
 ## Results (2026-11-04, `embeddinggemma-2-BF16`, 768d)

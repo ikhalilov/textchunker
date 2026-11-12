@@ -293,7 +293,7 @@ public sealed class LlamaCppEmbeddingProviderTests
         var exception = await Assert.ThrowsAsync<EmbeddingProviderException>(
             () => Create(handler, options).EmbedAsync(new[] { "short" }));
 
-        Assert.Contains("не может обработать", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("cannot process", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -417,7 +417,7 @@ public sealed class LlamaCppEmbeddingProviderTests
         var exception = await Assert.ThrowsAsync<EmbeddingProviderException>(
             () => provider.EmbedAsync(new[] { "abc" }));
 
-        Assert.Contains("Не удалось", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Failed to obtain embeddings", exception.Message, StringComparison.Ordinal);
         Assert.Equal(5, exception.ExitCode);
     }
 
@@ -454,7 +454,7 @@ public sealed class LlamaCppEmbeddingProviderTests
         var exception = await Assert.ThrowsAsync<EmbeddingProviderException>(
             () => Create(handler).EmbedAsync(new[] { "abc" }));
 
-        Assert.Contains("размерность", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("dimensionality", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -466,7 +466,7 @@ public sealed class LlamaCppEmbeddingProviderTests
         var exception = await Assert.ThrowsAsync<EmbeddingProviderException>(
             () => Create(handler).EmbedAsync(new[] { "abc", "def" }));
 
-        Assert.Contains("ожидалось", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Expected", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

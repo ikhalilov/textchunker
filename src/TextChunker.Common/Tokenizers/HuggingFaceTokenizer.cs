@@ -72,7 +72,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
         catch (Exception ex)
         {
             throw new TokenizerLoadException(
-                $"Не удалось загрузить токенизатор '{_modelName}' ({_jsonPath}): {ex.Message}", ex);
+                $"Failed to load tokenizer '{_modelName}' ({_jsonPath}): {ex.Message}", ex);
         }
 
         _loadedAt = DateTime.Now;
@@ -136,7 +136,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
             using var stream = response.Content.ReadAsStream();
             if (stream == null)
             {
-                throw new TokenizerLoadException($"Пустой ответ при загрузке '{modelName}' с {url}.");
+                throw new TokenizerLoadException($"Empty response while downloading '{modelName}' from {url}.");
             }
 
             using (var fs = new FileStream(tmpPath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -154,7 +154,7 @@ public sealed class HuggingFaceTokenizer : ITokenizer
                 File.Delete(tmpPath);
             }
             throw new TokenizerLoadException(
-                $"Не удалось скачать токенизатор '{modelName}' с {url}: {ex.Message}", ex);
+                $"Failed to download tokenizer '{modelName}' from {url}: {ex.Message}", ex);
         }
     }
 

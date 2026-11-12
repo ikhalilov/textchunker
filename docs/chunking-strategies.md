@@ -66,10 +66,10 @@ textchunker --input doc.txt --strategy recursive --separators "$|" "$||"
 
 An empty string (`""`) means a hard cut.
 
-**Known limitation:** Russian abbreviations (`т. д.`, `т. п.`, `см.`, `стр.`)
-are not recognized as a separate case. On the hard-cut fallback the boundary
-may pass inside an abbreviation; the text is not lost and the limit is observed,
-but semantically even sentence boundaries are not guaranteed.
+**Known limitation:** Russian abbreviations are not recognized as a separate
+case. On the hard-cut fallback the boundary may pass inside an abbreviation;
+the text is not lost and the limit is observed, but semantically even sentence
+boundaries are not guaranteed.
 
 ## paragraph
 

@@ -25,7 +25,7 @@ public sealed class HashEmbeddingProvider : IEmbeddingProvider
     {
         if (dimensions < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "Размерность должна быть не меньше 1.");
+            throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "Dimensions must be at least 1.");
         }
 
         _dimensions = dimensions;
@@ -164,7 +164,7 @@ public sealed class HashEmbeddingProvider : IEmbeddingProvider
         {
             if (float.IsNaN(value) || float.IsInfinity(value))
             {
-                throw new EmbeddingProviderException("Эмбеддинг содержит NaN/Infinity.");
+                throw new EmbeddingProviderException("The embedding contains NaN/Infinity.");
             }
             sum += (double)value * value;
         }

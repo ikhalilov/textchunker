@@ -32,12 +32,12 @@ public sealed class ChunkingEngine(
 
         if (string.IsNullOrWhiteSpace(request.Text))
         {
-            throw new ArgumentException("Поле 'text' обязательно и не может быть пустым.");
+            throw new ArgumentException("The 'text' field is required and cannot be empty.");
         }
         if (request.Text.Length > apiOptions.MaxTextChars)
         {
             throw new PayloadTooLargeException(
-                $"Текст длиннее лимита {apiOptions.MaxTextChars} символов.");
+                $"Text exceeds the limit of {apiOptions.MaxTextChars} characters.");
         }
 
         ChunkingOptions options = BuildOptions(request);

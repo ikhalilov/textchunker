@@ -39,7 +39,7 @@ public static class TokenizerFactory
             _ => throw new ArgumentOutOfRangeException(
                 nameof(name),
                 name,
-                $"Неизвестный токенизатор '{name}'. Допустимые значения: {string.Join(", ", SupportedNames)}.")
+                $"Unknown tokenizer '{name}'. Valid values: {string.Join(", ", SupportedNames)}.")
         };
     }
 

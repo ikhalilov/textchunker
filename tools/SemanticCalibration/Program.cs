@@ -41,14 +41,14 @@ internal static class Program
 
         if (!Directory.Exists(corpus))
         {
-            Console.Error.WriteLine($"Корпус не найден: {corpus}");
+            Console.Error.WriteLine($"Corpus not found: {corpus}");
             return 2;
         }
 
         List<Document> documents = LoadCorpus(corpus);
         if (documents.Count == 0)
         {
-            Console.Error.WriteLine($"В корпусе нет пар *.md + *.json: {corpus}");
+            Console.Error.WriteLine($"No *.md + *.json pairs found in the corpus: {corpus}");
             return 2;
         }
 
@@ -66,10 +66,10 @@ internal static class Program
 
         var tokenizer = new WordTokenizer();
         var defaults = new SemanticOptions() with { MaxAtomTokens = maxAtomTokens };
-        Console.WriteLine($"Корпус: {corpus} ({documents.Count} док.)");
+        Console.WriteLine($"Corpus: {corpus} ({documents.Count} docs)");
         Console.WriteLine($"Endpoint: {endpoint}, model: {model ?? "(default)"}, " +
             $"batch={batchSize}, concurrency={concurrency}, maxAtomTokens={maxAtomTokens}");
-        Console.WriteLine($"Допуск совпадения границы: ±{_tolerance:0.#} атом");
+        Console.WriteLine($"Boundary match tolerance: ±{_tolerance:0.#} atoms");
         Console.WriteLine();
 
         if (options.Has("--dump-atoms"))
@@ -109,7 +109,7 @@ internal static class Program
                         int[] truth = MapLabels(document, atomList);
                         if (truth.Length == 0)
                         {
-                            perDocument.Add($"{document.Name}: нет размеченных границ");
+                            perDocument.Add($"{document.Name}: no labeled boundaries");
                             continue;
                         }
 
@@ -182,7 +182,7 @@ internal static class Program
             int offset = document.Text.IndexOf(label, StringComparison.Ordinal);
             if (offset < 0)
             {
-                Console.Error.WriteLine($"{document.Name}: метка не найдена: '{label}'");
+                Console.Error.WriteLine($"{document.Name}: label not found: '{label}'");
                 continue;
             }
 
@@ -198,8 +198,8 @@ internal static class Program
 
             if (atom <= 0)
             {
-                // 0 — начало документа, границей не является.
-                Console.Error.WriteLine($"{document.Name}: метка '{label}' попала в первый атом или вне атомов");
+                // 0 is the start of the document and is not a boundary.
+                Console.Error.WriteLine($"{document.Name}: label '{label}' falls into the first atom or outside the atoms");
                 continue;
             }
 

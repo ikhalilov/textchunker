@@ -55,7 +55,7 @@ public static class ApiDocsExtensions
         if (!options.OpenApiRoute.Contains("{documentName}", StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                "ApiDocs:OpenApiRoute должен содержать {documentName}, например /openapi/{documentName}.json.");
+                "ApiDocs:OpenApiRoute must contain {documentName}, for example /openapi/{documentName}.json.");
         }
 
         app.MapOpenApi(options.OpenApiRoute);

@@ -19,7 +19,7 @@ public sealed class FileTextSource : ITextSource, IDisposable
     {
         if (!File.Exists(path))
         {
-            throw new TextSourceErrorException(3, $"Файл не найден: {path}");
+            throw new TextSourceErrorException(3, $"File not found: {path}");
         }
 
         SourceName = Path.GetFileName(path);
@@ -32,7 +32,7 @@ public sealed class FileTextSource : ITextSource, IDisposable
         }
         catch (Exception)
         {
-            throw new TextSourceErrorException(4, $"Не удалось открыть файл для чтения: {path}");
+            throw new TextSourceErrorException(4, $"Failed to open the file for reading: {path}");
         }
 
         try

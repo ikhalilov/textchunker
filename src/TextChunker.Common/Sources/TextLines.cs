@@ -64,7 +64,7 @@ internal static class TextLines
         }
         catch (ArgumentException ex)
         {
-            throw new TextSourceErrorException(2, $"Неподдерживаемая кодировка '{name}': {ex.Message}");
+            throw new TextSourceErrorException(2, $"Unsupported encoding '{name}': {ex.Message}");
         }
     }
 
@@ -93,7 +93,7 @@ internal static class TextLines
             }
             catch (DecoderFallbackException ex)
             {
-                throw new TextSourceErrorException(4, $"Невалидная UTF-8: {ex.Message}");
+                throw new TextSourceErrorException(4, $"Invalid UTF-8: {ex.Message}");
             }
             if (line is null)
             {

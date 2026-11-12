@@ -22,8 +22,8 @@ text ──► SemanticAtomizer ──► atoms (sentences, paragraphs, headings
 
 1. **Atomization.** Markdown headings, list items and code blocks become
    separate atoms (code is never split). The remaining text is split into
-   sentences with protection for abbreviations (`т. д.`, `см.`, `стр.`,
-   `Mr.`, initials) and decimal fractions. Atoms that are too long
+   sentences with protection for abbreviations (e.g. `Mr.`, initials, and
+   their Russian equivalents) and decimal fractions. Atoms that are too long
    (> `--semantic-max-atom-tokens`) are split in advance; short ones are
    merged with their neighbors, with a short sub-heading at the start of a
    paragraph pulling the following sentence with it rather than being glued

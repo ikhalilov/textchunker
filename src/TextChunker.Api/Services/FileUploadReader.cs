@@ -19,20 +19,20 @@ public static class FileUploadReader
     {
         if (file is null || file.Length == 0)
         {
-            throw new ArgumentException("Файл не передан или пуст.");
+            throw new ArgumentException("No file was provided, or the file is empty.");
         }
 
         string extension = Path.GetExtension(file.FileName);
         if (!AllowedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
         {
             throw new UnsupportedMediaTypeException(
-                $"Поддерживаются только .txt, .md, .markdown (получено '{extension}').");
+                $"Only .txt, .md, .markdown are supported (received '{extension}').");
         }
 
         long maxBytes = (long)maxTextChars * 4 + 4;
         if (file.Length > maxBytes)
         {
-            throw new PayloadTooLargeException($"Файл больше лимита ({maxBytes} байт).");
+            throw new PayloadTooLargeException($"File exceeds the limit ({maxBytes} bytes).");
         }
 
         bool invalidAsError = ParseInvalidEncoding(invalidEncoding);
@@ -50,11 +50,11 @@ public static class FileUploadReader
 
         if (text.Length == 0)
         {
-            throw new ArgumentException("Файл пуст.");
+            throw new ArgumentException("The file is empty.");
         }
         if (text.Length > maxTextChars)
         {
-            throw new PayloadTooLargeException($"Текст длиннее лимита {maxTextChars} символов.");
+            throw new PayloadTooLargeException($"Text exceeds the limit of {maxTextChars} characters.");
         }
 
         return text;
@@ -67,7 +67,7 @@ public static class FileUploadReader
             "replace" => false,
             "error" => true,
             _ => throw new ArgumentException(
-                $"Неизвестный режим 'invalidEncoding' ('{value}'). Допустимые: replace, error.")
+                $"Unknown 'invalidEncoding' mode ('{value}'). Allowed values: replace, error.")
         };
     }
 
@@ -90,7 +90,7 @@ public static class FileUploadReader
         }
         catch (ArgumentException exception)
         {
-            throw new ArgumentException($"Неподдерживаемая кодировка '{normalized}': {exception.Message}");
+            throw new ArgumentException($"Unsupported encoding '{normalized}': {exception.Message}");
         }
     }
 }

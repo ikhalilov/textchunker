@@ -58,9 +58,9 @@ public sealed class RecursiveChunkerTests
     [Fact]
     public void RussianAbbreviationsPreserveTextAndLimit()
     {
-        // Russian abbreviations (т. д., т. п., см., стр.): we verify that chunking
-        // does not lose text and does not exceed the limit (boundaries may fall inside
-        // an abbreviation under a hard fallback — that is acceptable).
+        // Russian abbreviations: we verify that chunking does not lose text and does
+        // not exceed the limit (boundaries may fall inside an abbreviation under a
+        // hard fallback — that is acceptable).
         const string text = "Это т. д. пример. Далее и т. п. текст: см. стр. 10. Конец.";
         var options = new ChunkingOptions(maxChars: 12, trim: false);
         var chunker = new RecursiveChunker();

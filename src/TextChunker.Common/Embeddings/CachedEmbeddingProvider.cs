@@ -78,7 +78,7 @@ public sealed class CachedEmbeddingProvider : IEmbeddingProvider, IEmbeddingMode
             if (vectors.Count != missing.Count)
             {
                 throw new EmbeddingProviderException(
-                    $"Провайдер {_inner.Name} вернул {vectors.Count} эмбеддингов вместо {missing.Count}.");
+                    $"Provider {_inner.Name} returned {vectors.Count} embeddings instead of {missing.Count}.");
             }
 
             for (int j = 0; j < missing.Count; j++)

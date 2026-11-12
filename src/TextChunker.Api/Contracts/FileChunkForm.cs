@@ -184,11 +184,11 @@ public sealed class FileChunkForm
         try
         {
             return JsonSerializer.Deserialize<T>(value, new JsonSerializerOptions(JsonSerializerDefaults.Web))
-                ?? throw new ArgumentException($"Поле '{field}' должно быть JSON-объектом, а не null.");
+                ?? throw new ArgumentException($"The '{field}' field must be a JSON object, not null.");
         }
         catch (JsonException)
         {
-            throw new ArgumentException($"Поле '{field}' должно быть корректным JSON-объектом.");
+            throw new ArgumentException($"The '{field}' field must be a valid JSON object.");
         }
     }
 
@@ -205,7 +205,7 @@ public sealed class FileChunkForm
         }
         catch (JsonException)
         {
-            throw new ArgumentException("Поле 'separators' должно быть JSON-массивом строк, например [\"\\n\\n\",\"\\n\"].");
+            throw new ArgumentException("The 'separators' field must be a JSON array of strings, for example [\"\\n\\n\",\"\\n\"].");
         }
     }
 
@@ -222,7 +222,7 @@ public sealed class FileChunkForm
         }
         catch (JsonException)
         {
-            throw new ArgumentException("Поле 'metadata' должно быть JSON-объектом, например {\"lang\":\"ru\"}.");
+            throw new ArgumentException("The 'metadata' field must be a JSON object, for example {\"lang\":\"ru\"}.");
         }
     }
 }

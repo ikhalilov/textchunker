@@ -76,7 +76,7 @@ public sealed class SemanticPlanner : ISemanticPlanner
         if (vectors.Count != expected)
         {
             throw new EmbeddingProviderException(
-                $"Провайдер {_provider.Name} вернул {vectors.Count} эмбеддингов для {expected} атомов.");
+                $"Provider {_provider.Name} returned {vectors.Count} embeddings for {expected} atoms.");
         }
 
         int dimension = -1;
@@ -85,7 +85,7 @@ public sealed class SemanticPlanner : ISemanticPlanner
             float[] vector = vectors[i];
             if (vector is null || vector.Length == 0)
             {
-                throw new EmbeddingProviderException($"Эмбеддинг атома #{i} пуст.");
+                throw new EmbeddingProviderException($"The embedding of atom #{i} is empty.");
             }
             if (dimension < 0)
             {
@@ -94,7 +94,7 @@ public sealed class SemanticPlanner : ISemanticPlanner
             else if (vector.Length != dimension)
             {
                 throw new EmbeddingProviderException(
-                    $"Эмбеддинги разной размерности: #{i} имеет {vector.Length}, ожидалось {dimension}.");
+                    $"Embeddings have different dimensionalities: #{i} has {vector.Length}, expected {dimension}.");
             }
         }
     }

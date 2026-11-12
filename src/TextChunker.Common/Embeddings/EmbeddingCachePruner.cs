@@ -31,15 +31,15 @@ public static class EmbeddingCachePruner
     {
         if (string.IsNullOrWhiteSpace(root))
         {
-            throw new ArgumentException("Каталог кэша не задан.", nameof(root));
+            throw new ArgumentException("The cache directory is not set.", nameof(root));
         }
         if (maxBytes is < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxBytes), maxBytes, "Лимит кэша не может быть отрицательным.");
+            throw new ArgumentOutOfRangeException(nameof(maxBytes), maxBytes, "The cache limit cannot be negative.");
         }
         if (maxAge is { } age && age < TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxAge), maxAge, "TTL кэша не может быть отрицательным.");
+            throw new ArgumentOutOfRangeException(nameof(maxAge), maxAge, "The cache TTL cannot be negative.");
         }
 
         DateTimeOffset reference = now ?? DateTimeOffset.UtcNow;

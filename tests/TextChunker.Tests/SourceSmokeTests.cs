@@ -167,7 +167,7 @@ public sealed class SourceSmokeTests
         // decode to 2 lines (2 chars + 1 char; 0x0A = line break).
         // The test does not assert the exact characters, because in this sandbox
         // the cp1251 codepage table is corrupted (0x81->U+0403, 0x82->U+201A, 0x84->U+201E
-        // rather than the standard А/Б/Г). Instead it verifies the mechanism,
+        // rather than the standard Cyrillic letters). Instead it verifies the mechanism,
         // which is identical in a real .NET:
         //  - the single-byte codepage is actually used (line structure preserved),
         //  - no U+FFFD replacement (with lenient UTF-8 these bytes would become

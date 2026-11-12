@@ -40,7 +40,7 @@ public static class EmbeddingProviderFactory
             _ => throw new ArgumentOutOfRangeException(
                 nameof(options),
                 options.Provider,
-                $"Неизвестный провайдер эмбеддингов '{options.Provider}'. Допустимые значения: {string.Join(", ", SupportedNames)}.")
+                $"Unknown embedding provider '{options.Provider}'. Valid values: {string.Join(", ", SupportedNames)}.")
         };
 
         if (!options.UseCache)

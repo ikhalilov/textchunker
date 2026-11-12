@@ -22,7 +22,7 @@ public sealed class RegexTokenizer : ITokenizer
     {
         if (string.IsNullOrWhiteSpace(pattern))
         {
-            throw new ArgumentException("Паттерн не может быть пустым", nameof(pattern));
+            throw new ArgumentException("The pattern cannot be empty", nameof(pattern));
         }
         _regex = new Regex(pattern, RegexOptions.CultureInvariant);
     }

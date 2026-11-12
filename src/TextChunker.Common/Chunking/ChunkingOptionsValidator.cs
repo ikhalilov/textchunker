@@ -30,7 +30,7 @@ public static class ChunkingOptionsValidator
 
         if (options.Separators is null || options.Separators.Count == 0)
         {
-            throw new ArgumentException("Список разделителей не может быть пустым (--separators).", nameof(options));
+            throw new ArgumentException("The separator list cannot be empty (--separators).", nameof(options));
         }
     }
 
@@ -38,7 +38,7 @@ public static class ChunkingOptionsValidator
     {
         if (value is <= 0)
         {
-            throw new ArgumentOutOfRangeException(name, value, $"{name} должен быть больше нуля.");
+            throw new ArgumentOutOfRangeException(name, value, $"{name} must be greater than zero.");
         }
     }
 
@@ -46,7 +46,7 @@ public static class ChunkingOptionsValidator
     {
         if (value is < 0)
         {
-            throw new ArgumentOutOfRangeException(name, value, $"{name} не может быть отрицательным.");
+            throw new ArgumentOutOfRangeException(name, value, $"{name} cannot be negative.");
         }
     }
 
@@ -57,7 +57,7 @@ public static class ChunkingOptionsValidator
             throw new ArgumentOutOfRangeException(
                 smallerName,
                 a,
-                $"{smallerName} ({a}) не может быть больше {largerName} ({b}).");
+                $"{smallerName} ({a}) cannot be greater than {largerName} ({b}).");
         }
     }
 
@@ -68,7 +68,7 @@ public static class ChunkingOptionsValidator
             throw new ArgumentOutOfRangeException(
                 valueName,
                 a,
-                $"{valueName} ({a}) должен быть меньше {maxName} ({b}).");
+                $"{valueName} ({a}) must be less than {maxName} ({b}).");
         }
     }
 }

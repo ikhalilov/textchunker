@@ -29,7 +29,7 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
     public ChunkSplit Chunk(string text, ITokenizer tokenizer, ChunkingOptions options, bool final = false)
     {
         SemanticPlan plan = _plan ?? throw new InvalidOperationException(
-            "Семантический план не построен: вызовите AttachPlan перед Chunk.");
+            "The semantic plan has not been built: call AttachPlan before Chunk.");
 
         if (string.IsNullOrEmpty(text))
         {
@@ -173,7 +173,7 @@ public sealed class SemanticChunker : IChunker, ISemanticPlanAware
 
     /// <summary>
     /// A hard cut is aligned to a word boundary: if the last whitespace before <paramref name="cut"/>
-    /// cuts off at least half of the piece, the cut is made there — otherwise fragments like "во"/"ду." remain.
+    /// cuts off at least half of the piece, the cut is made there — otherwise short fragments remain.
     /// </summary>
     private static int PreferWordBoundary(string text, int start, int cut, int end)
     {

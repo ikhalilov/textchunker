@@ -30,7 +30,7 @@ public static class ChunkerFactory
             _ => throw new ArgumentOutOfRangeException(
                 nameof(strategy),
                 strategy,
-                $"Неизвестная стратегия '{strategy}'. Допустимые значения: {string.Join(", ", SupportedStrategies)}.")
+                $"Unknown strategy '{strategy}'. Valid values: {string.Join(", ", SupportedStrategies)}.")
         };
     }
 

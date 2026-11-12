@@ -41,7 +41,7 @@ public sealed record SemanticOptions
             throw new ArgumentOutOfRangeException(
                 nameof(Percentile),
                 Percentile,
-                "--semantic-percentile должен быть в диапазоне (0, 1].");
+                "--semantic-percentile must be in the range (0, 1].");
         }
 
         if (MinDistance < 0)
@@ -49,27 +49,27 @@ public sealed record SemanticOptions
             throw new ArgumentOutOfRangeException(
                 nameof(MinDistance),
                 MinDistance,
-                "--semantic-min-distance не может быть отрицательным.");
+                "--semantic-min-distance cannot be negative.");
         }
 
         if (Window < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(Window), Window, "--semantic-window должен быть не меньше 1.");
+            throw new ArgumentOutOfRangeException(nameof(Window), Window, "--semantic-window must be at least 1.");
         }
 
         if (MaxBytes <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(MaxBytes), MaxBytes, "--semantic-max-bytes должен быть больше нуля.");
+            throw new ArgumentOutOfRangeException(nameof(MaxBytes), MaxBytes, "--semantic-max-bytes must be greater than zero.");
         }
 
         if (MinAtomChars < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(MinAtomChars), MinAtomChars, "--semantic-min-atom-chars не может быть отрицательным.");
+            throw new ArgumentOutOfRangeException(nameof(MinAtomChars), MinAtomChars, "--semantic-min-atom-chars cannot be negative.");
         }
 
         if (MaxAtomTokens < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(MaxAtomTokens), MaxAtomTokens, "--semantic-max-atom-tokens должен быть не меньше 1.");
+            throw new ArgumentOutOfRangeException(nameof(MaxAtomTokens), MaxAtomTokens, "--semantic-max-atom-tokens must be at least 1.");
         }
 
         if (StreamWindowBytes < 1)
@@ -77,7 +77,7 @@ public sealed record SemanticOptions
             throw new ArgumentOutOfRangeException(
                 nameof(StreamWindowBytes),
                 StreamWindowBytes,
-                "--semantic-stream-window-bytes должен быть больше нуля.");
+                "--semantic-stream-window-bytes must be greater than zero.");
         }
 
         if (StreamOverlapBytes < 0 || StreamOverlapBytes >= StreamWindowBytes)
@@ -85,7 +85,7 @@ public sealed record SemanticOptions
             throw new ArgumentOutOfRangeException(
                 nameof(StreamOverlapBytes),
                 StreamOverlapBytes,
-                "--semantic-stream-overlap-bytes должен быть в диапазоне [0, window).");
+                "--semantic-stream-overlap-bytes must be in the range [0, window).");
         }
     }
 
@@ -101,7 +101,7 @@ public sealed record SemanticOptions
             _ => throw new ArgumentOutOfRangeException(
                 nameof(value),
                 value,
-                $"Неизвестный режим --semantic-fallback '{value}'. Допустимые значения: recursive, error, streaming.")
+                $"Unknown --semantic-fallback mode '{value}'. Allowed values: recursive, error, streaming.")
         };
     }
 }

@@ -49,7 +49,7 @@ public static class CliRunner
         {
             foreach (var error in parsed.Errors)
             {
-                Console.Error.WriteLine($"Ошибка аргументов: {error.Message}");
+                Console.Error.WriteLine($"Argument error: {error.Message}");
             }
             return 2;
         }
@@ -157,27 +157,27 @@ public static class CliRunner
         }
         catch (ArgumentOutOfRangeException ex)
         {
-            Console.Error.WriteLine($"Ошибка аргументов: {ex.Message}");
+            Console.Error.WriteLine($"Argument error: {ex.Message}");
             return 2;
         }
         catch (ArgumentException ex)
         {
-            Console.Error.WriteLine($"Ошибка аргументов: {ex.Message}");
+            Console.Error.WriteLine($"Argument error: {ex.Message}");
             return 2;
         }
         catch (UnauthorizedAccessException ex)
         {
-            Console.Error.WriteLine($"Ошибка записи: {ex.Message}");
+            Console.Error.WriteLine($"Write error: {ex.Message}");
             return 6;
         }
         catch (IOException ex)
         {
-            Console.Error.WriteLine($"Ошибка ввода-вывода: {ex.Message}");
+            Console.Error.WriteLine($"I/O error: {ex.Message}");
             return 6;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Ошибка: {ex.Message}");
+            Console.Error.WriteLine($"Error: {ex.Message}");
             return 1;
         }
     }
@@ -225,7 +225,7 @@ public static class CliRunner
             catch (OperationCanceledException)
             {
                 output.Flush();
-                Console.Error.WriteLine("Обработка прервана; выведены только завершённые чанки.");
+                Console.Error.WriteLine("Processing interrupted; only completed chunks were written.");
                 return 0;
             }
             finally
@@ -277,8 +277,8 @@ public static class CliRunner
         if (string.IsNullOrWhiteSpace(config.TokenizerName))
         {
             Console.Error.WriteLine(
-                "warning: --tokenizer не указан — используется приближённый word-based подсчёт; " +
-                "для точного лимита укажите --tokenizer huggingface --tokenizer-model google/embeddinggemma-2.");
+                "warning: --tokenizer not specified — using approximate word-based counting; " +
+                "for an exact limit, use --tokenizer huggingface --tokenizer-model google/embeddinggemma-2.");
         }
 
         return TokenizerFactory.Create(
@@ -343,7 +343,7 @@ public static class CliRunner
         catch (Exception exception) when (
             exception is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            Console.Error.WriteLine($"Ошибка обслуживания кэша: {exception.Message}");
+            Console.Error.WriteLine($"Cache maintenance error: {exception.Message}");
             return 1;
         }
     }
@@ -737,13 +737,13 @@ public static class CliRunner
                 null or "replace" => false,
                 "error" => true,
                 _ => throw new ArgumentException(
-                    $"Неизвестный режим --invalid-encoding '{invalidEncoding}'. Допустимые: replace, error.")
+                    $"Unknown --invalid-encoding mode '{invalidEncoding}'. Allowed values: replace, error.")
             };
 
             string? format = Normalize(parseResult.GetValue(_format)) ?? "jsonl";
             if (format is not ("jsonl" or "text"))
             {
-                throw new ArgumentException($"Неизвестный формат '{format}'. Допустимые: jsonl, text.");
+                throw new ArgumentException($"Unknown format '{format}'. Allowed values: jsonl, text.");
             }
 
             var normalization = ParseNormalization(parseResult.GetValue(_normalize));
@@ -892,7 +892,7 @@ public static class CliRunner
                         break;
                     default:
                         throw new ArgumentException(
-                            $"Неизвестная нормализация '{raw}'. Допустимые: nfc, nfkc, line-endings, whitespace, all.");
+                            $"Unknown normalization '{raw}'. Allowed values: nfc, nfkc, line-endings, whitespace, all.");
                 }
             }
             return (nfc, nfkc, lineEndings, whitespace);
@@ -911,7 +911,7 @@ public static class CliRunner
                 int separator = value.IndexOf('=');
                 if (separator <= 0)
                 {
-                    throw new ArgumentException($"Метаданные должны быть в формате key=value: '{value}'.");
+                    throw new ArgumentException($"Metadata must be in key=value format: '{value}'.");
                 }
                 metadata[value.Substring(0, separator)] = value.Substring(separator + 1);
             }

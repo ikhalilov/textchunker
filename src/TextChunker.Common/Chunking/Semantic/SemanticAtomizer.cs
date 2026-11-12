@@ -6,7 +6,7 @@ namespace TextChunker.Chunking.Semantic;
 /// <summary>
 /// Splits text into atoms — units that semantic chunking treats as indivisible:
 /// code blocks (as a whole), Markdown headings, list items, paragraphs and sentences.
-/// Protection against abbreviations (<c>т. д.</c>, <c>см.</c>, <c>Mr.</c>, initials) prevents
+/// Protection against abbreviations (e.g. <c>Mr.</c>, initials, and Russian abbreviations) prevents
 /// sentences from being split on them. All offsets are UTF-16 indices in the source text;
 /// atoms are ordered and do not overlap, and the gaps between them are separators.
 /// </summary>
@@ -213,7 +213,7 @@ public static class SemanticAtomizer
             }
 
             // A short fragment at the start of a paragraph is usually a subheading
-            // ("Охрана труда") or a lead: the next sentence is glued to it
+            // (a short subheading) or a lead: the next sentence is glued to it
             // so that the topic boundary stays at the start of the atom.
             bool paragraphStart = IsParagraphStart(text, atom.Start);
             int start = atom.Start;
@@ -394,8 +394,8 @@ public static class SemanticAtomizer
 
         string word = text.Substring(wordStart, wordEnd - wordStart).ToLowerInvariant();
 
-        // Initials ("И.", "А.С.") and single-letter abbreviations are not split on;
-        // a single digit ("раздел 2."), on the contrary, is an ordinary boundary.
+        // Initials and single-letter abbreviations are not split on;
+        // a single digit (for example, in a section number) is an ordinary boundary.
         if (word.Length == 1 && char.IsLetter(word[0]))
         {
             return true;

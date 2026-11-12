@@ -93,7 +93,7 @@ public sealed class ChunkingService
             throw new ArgumentOutOfRangeException(
                 nameof(_options),
                 max,
-                $"Префикс содержит {prefixTokens} токенов и не оставляет места в лимите {max} токенов.");
+                $"The prefix contains {prefixTokens} tokens and leaves no room within the limit of {max} tokens.");
         }
     }
 
@@ -121,7 +121,7 @@ public sealed class ChunkingService
         if (_semanticPlanner is null)
         {
             throw new InvalidOperationException(
-                "Для стратегии 'semantic' нужен провайдер эмбеддингов (--embedding-provider).");
+                "The 'semantic' strategy requires an embedding provider (--embedding-provider).");
         }
 
         if (_semanticOptions.Fallback == SemanticFallbackMode.Streaming)
@@ -149,7 +149,7 @@ public sealed class ChunkingService
         if (sizeBytes > _semanticOptions.MaxBytes)
         {
             string message =
-                $"Текст {sizeBytes} байт превышает лимит семантического режима {_semanticOptions.MaxBytes} байт.";
+                $"The text of {sizeBytes} bytes exceeds the semantic mode limit of {_semanticOptions.MaxBytes} bytes.";
 
             if (_semanticOptions.Fallback == SemanticFallbackMode.Error)
             {
@@ -177,7 +177,7 @@ public sealed class ChunkingService
         if (_semanticPlanner is null || _chunker is not ISemanticPlanAware aware)
         {
             throw new InvalidOperationException(
-                "Streaming-режим доступен только для стратегии 'semantic' с провайдером эмбеддингов.");
+                "Streaming mode is available only for the 'semantic' strategy with an embedding provider.");
         }
 
         var stopwatch = Stopwatch.StartNew();

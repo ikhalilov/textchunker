@@ -49,7 +49,7 @@ public sealed class EmbeddingCache
     {
         if (_scopeDir is null)
         {
-            throw new InvalidOperationException("Кэш эмбеддингов не настроен.");
+            throw new InvalidOperationException("The embedding cache is not configured.");
         }
         return Path.Combine(_scopeDir, Hash(text) + ".bin");
     }
@@ -74,21 +74,21 @@ public sealed class EmbeddingCache
             byte[] bytes = File.ReadAllBytes(path);
             if (bytes.Length < HeaderLength)
             {
-                throw new InvalidDataException("Слишком короткая запись кэша.");
+                throw new InvalidDataException("Cache record is too short.");
             }
 
             for (int i = 0; i < Magic.Length; i++)
             {
                 if (bytes[i] != Magic[i])
                 {
-                    throw new InvalidDataException("Некорректная магия записи кэша.");
+                    throw new InvalidDataException("Invalid cache record magic.");
                 }
             }
 
             int dimensions = BitConverter.ToInt32(bytes, Magic.Length);
             if (dimensions <= 0 || bytes.Length != HeaderLength + dimensions * 4)
             {
-                throw new InvalidDataException($"Некорректный размер вектора в кэше (dim={dimensions}).");
+                throw new InvalidDataException($"Invalid vector size in the cache (dim={dimensions}).");
             }
 
             var values = new float[dimensions];
@@ -97,7 +97,7 @@ public sealed class EmbeddingCache
             {
                 if (float.IsNaN(value) || float.IsInfinity(value))
                 {
-                    throw new InvalidDataException("Кэш содержит NaN/Infinity.");
+                    throw new InvalidDataException("The cache contains NaN/Infinity.");
                 }
             }
 

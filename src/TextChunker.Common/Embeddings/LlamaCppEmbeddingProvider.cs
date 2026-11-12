@@ -231,8 +231,8 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         if (text.Length < 64)
         {
             throw new EmbeddingProviderException(
-                $"llama.cpp не может обработать вход длиной {text.Length} символов. " +
-                "Увеличьте физический батч сервера (-b/--batch-size).");
+                $"llama.cpp cannot process an input of {text.Length} characters. " +
+                "Increase the server's physical batch (-b/--batch-size).");
         }
 
         int cut = FindSplitPoint(text);
@@ -324,7 +324,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             catch (Exception exception)
             {
                 throw new EmbeddingProviderException(
-                    $"Не удалось получить эмбеддинги с {_embeddingsUrl}: {exception.Message}",
+                    $"Failed to obtain embeddings from {_embeddingsUrl}: {exception.Message}",
                     exception);
             }
         }
@@ -350,7 +350,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             }
 
             var error = new EmbeddingProviderException(
-                $"llama.cpp вернул HTTP {(int)response.StatusCode} для {_embeddingsUrl}: {Truncate(detail)}");
+                $"llama.cpp returned HTTP {(int)response.StatusCode} for {_embeddingsUrl}: {Truncate(detail)}");
 
             if (IsRetryableStatus(response.StatusCode))
             {
@@ -399,7 +399,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         catch (JsonException exception)
         {
             throw new EmbeddingProviderException(
-                $"llama.cpp вернул невалидный JSON: {exception.Message}", exception);
+                $"llama.cpp returned invalid JSON: {exception.Message}", exception);
         }
 
         using (document)
@@ -409,7 +409,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
                 || !root.TryGetProperty("data", out JsonElement data)
                 || data.ValueKind != JsonValueKind.Array)
             {
-                throw new EmbeddingProviderException("В ответе эмбеддингов нет массива 'data'.");
+                throw new EmbeddingProviderException("The embeddings response does not contain a 'data' array.");
             }
 
             var items = new List<(int Index, float[] Vector)>();
@@ -420,7 +420,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
                     || !item.TryGetProperty("embedding", out JsonElement embedding)
                     || embedding.ValueKind != JsonValueKind.Array)
                 {
-                    throw new EmbeddingProviderException($"Элемент 'data[{position}]' не содержит массив 'embedding'.");
+                    throw new EmbeddingProviderException($"Element 'data[{position}]' does not contain an 'embedding' array.");
                 }
 
                 int index = position;
@@ -428,7 +428,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
                 {
                     if (indexElement.ValueKind != JsonValueKind.Number)
                     {
-                        throw new EmbeddingProviderException($"Поле 'index' элемента 'data[{position}]' не является числом.");
+                        throw new EmbeddingProviderException($"Field 'index' of element 'data[{position}]' is not a number.");
                     }
                     index = indexElement.GetInt32();
                 }
@@ -440,7 +440,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
             if (items.Count != expectedCount)
             {
                 throw new EmbeddingProviderException(
-                    $"Ожидалось {expectedCount} эмбеддингов, получено {items.Count}.");
+                    $"Expected {expectedCount} embeddings, got {items.Count}.");
             }
 
             var ordered = items.OrderBy(item => item.Index).ToList();
@@ -450,7 +450,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
                 if (ordered[i].Index != i)
                 {
                     throw new EmbeddingProviderException(
-                        $"Индексы эмбеддингов не покрывают 0..{ordered.Count - 1} без пропусков (получен {ordered[i].Index}).");
+                        $"Embedding indices do not cover 0..{ordered.Count - 1} without gaps (got {ordered[i].Index}).");
                 }
                 vectors[i] = Validate(ordered[i].Vector, i);
             }
@@ -466,14 +466,14 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         {
             if (value.ValueKind != JsonValueKind.Number)
             {
-                throw new EmbeddingProviderException($"Эмбеддинг 'data[{position}]' содержит не-число.");
+                throw new EmbeddingProviderException($"Embedding 'data[{position}]' contains a non-number.");
             }
             values.Add(value.GetSingle());
         }
 
         if (values.Count == 0)
         {
-            throw new EmbeddingProviderException($"Эмбеддинг 'data[{position}]' пуст.");
+            throw new EmbeddingProviderException($"Embedding 'data[{position}]' is empty.");
         }
         return values.ToArray();
     }
@@ -483,7 +483,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         if (_options.Dimensions > 0 && vector.Length != _options.Dimensions)
         {
             throw new EmbeddingProviderException(
-                $"Эмбеддинг #{position} имеет размерность {vector.Length}, ожидалось {_options.Dimensions}.");
+                $"Embedding #{position} has dimensionality {vector.Length}, expected {_options.Dimensions}.");
         }
         return HashEmbeddingProvider.Normalize(vector);
     }
@@ -519,7 +519,7 @@ public sealed class LlamaCppEmbeddingProvider : IEmbeddingProvider, IEmbeddingMo
         }
         catch (Exception)
         {
-            return "<тело недоступно>";
+            return "<body unavailable>";
         }
     }
 

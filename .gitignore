@@ -487,6 +487,9 @@ $RECYCLE.BIN/
 # opencode
 .opencode/
 
+# agents
+.agents
+
 # openspec: changes/, specs/ and config.yaml are versioned with the project
 # (do not add a blanket `openspec` ignore — it hides change/archive documents)
 

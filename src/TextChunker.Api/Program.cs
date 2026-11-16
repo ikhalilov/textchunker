@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TextChunker;
+using TextChunker.Api.Extensions;
 using TextChunker.Abstractions;
 using TextChunker.Api.Contracts;
 using TextChunker.Api.Services;
@@ -18,15 +19,7 @@ const long MaxRequestBodySizeBytes = 20 * 1024 * 1024;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOptions<ApiOptions>()
-    .Bind(builder.Configuration.GetSection("Chunking"))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-builder.Services.AddSingleton<TokenizerCache>();
-builder.Services.AddSingleton<ChunkingEngine>();
-builder.Services.AddSingleton<SemanticApiKeyFilter>();
-builder.Services.AddProblemDetails();
-builder.Services.AddApiDocs(builder.Configuration);
+builder.Services.AddApiServices(builder.Configuration);
 
 builder.WebHost.ConfigureKestrel(options =>
 {

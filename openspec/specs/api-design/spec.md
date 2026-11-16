@@ -90,3 +90,27 @@ SHALL reject other extensions with `415 Unsupported Media Type`.
 
 - **WHEN** a client uploads a file with an unsupported extension to `/api/v1/chunk/file`
 - **THEN** the API responds with `415 Unsupported Media Type`
+
+### Requirement: Centralized service registration
+
+All application services of the API — chunking options binding, tokenizer cache, chunking engine,
+semantic API-key filter, problem details, and OpenAPI documentation — SHALL be registered
+through the single `ServiceExtensions.AddApiServices` extension method of the
+`TextChunker.Api.Extensions` namespace, rather than through individual registrations in the
+host startup code.
+
+#### Scenario: Program.cs holds only host configuration and endpoint mapping
+
+- **WHEN** `src/TextChunker.Api/Program.cs` is inspected
+- **THEN** it contains exactly one service registration call (`AddApiServices`) and no individual
+  `AddOptions`/`AddSingleton`/`AddProblemDetails`/`AddApiDocs` calls
+
+### Requirement: Extension helpers live in a single folder
+
+All extension helper classes (`*Extensions`) of the `TextChunker.Api` project SHALL be located
+in the `src/TextChunker.Api/Extensions/` folder with the namespace `TextChunker.Api.Extensions`.
+
+#### Scenario: A new helper extension is added
+
+- **WHEN** an extension helper class is added to `TextChunker.Api`
+- **THEN** its source file is located in `src/TextChunker.Api/Extensions/`

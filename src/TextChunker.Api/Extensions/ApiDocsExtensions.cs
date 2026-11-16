@@ -4,7 +4,9 @@ using Microsoft.OpenApi;
 
 using Scalar.AspNetCore;
 
-namespace TextChunker.Api.Services;
+using TextChunker.Api.Services;
+
+namespace TextChunker.Api.Extensions;
 
 /// <summary>Wiring up the built-in OpenAPI (Microsoft.AspNetCore.OpenApi) and the Scalar UI.</summary>
 public static class ApiDocsExtensions

@@ -60,6 +60,8 @@ either direction. `ServiceExtensions.cs` keeps `using TextChunker.Api.Services;`
 (still needed for the three services) and adds `using TextChunker.Api.Options;`.
 `ApiDocsExtensions.cs` replaces its `using TextChunker.Api.Services;`
 (used there only for `ApiDocsOptions`) with `using TextChunker.Api.Options;`.
+`Program.cs` and `ChunkingEngine.cs`, which consume `IOptionsMonitor<ApiOptions>`,
+gain `using TextChunker.Api.Options;`.
 
 **D2 — `Contracts/` remains the models home.**
 Everything crossing the HTTP boundary already lives here with stable,
@@ -84,9 +86,9 @@ to the whole project.
 
 - Missing or stale `using` after the moves — caught by the build; each task
   carries a concrete verification.
-- The namespace change is confined to the two moved files plus the two
-  extension files; no other project references `ApiOptions` or
-  `ApiDocsOptions`.
+- The namespace change is confined to the two moved files plus the four consumer
+  files (`ServiceExtensions`, `ApiDocsExtensions`, `Program`, `ChunkingEngine`);
+  no other project references `ApiOptions` or `ApiDocsOptions`.
 - API tests start a separate process and verify behavior across the HTTP
   boundary; the move is invisible to them, so green results are expected.
 

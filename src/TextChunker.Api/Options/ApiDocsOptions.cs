@@ -1,4 +1,4 @@
-namespace TextChunker.Api.Services;
+namespace TextChunker.Api.Options;
 
 /// <summary>
 /// Settings for the interactive API documentation (the <c>ApiDocs</c> section):

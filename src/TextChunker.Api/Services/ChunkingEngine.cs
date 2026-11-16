@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using TextChunker.Abstractions;
 using TextChunker.Abstractions.Embeddings;
 using TextChunker.Api.Contracts;
+using TextChunker.Api.Options;
 using TextChunker.Chunking;
 using TextChunker.Chunking.Semantic;
 using TextChunker.Embeddings;

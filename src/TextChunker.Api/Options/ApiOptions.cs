@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TextChunker.Api.Services;
+namespace TextChunker.Api.Options;
 
 /// <summary>API settings (the <c>Chunking</c> section in appsettings/environment variables).</summary>
 public sealed class ApiOptions

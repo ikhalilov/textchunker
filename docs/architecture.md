@@ -120,6 +120,11 @@ Writers/, Embeddings/; hosts reference Common + Abstractions only.
   `Channel<Chunk>` (backpressure, async writes);
   `POST /api/v1/chunk/file` — multipart upload of `.txt`/`.md`/`.markdown`
   (encodings, BOM); `GET /api/v1/health|tokenizers|strategies`.
+- Source layout, one concern per folder:
+  `Contracts/` — HTTP wire types (request/response, multipart) that feed the
+  OpenAPI schema; `Extensions/` — static `*Extensions` helpers; `Options/` —
+  host configuration POCOs bound from `IConfiguration`; `Services/` — DI
+  services, internal per-request state, and API exceptions.
 - `SemanticApiKeyFilter` — a single endpoint filter for `X-API-Key`
   validation on semantic requests when `TEXTCHUNKER_EMBEDDING_API_KEY` is
   set.

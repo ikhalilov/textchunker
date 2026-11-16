@@ -2,7 +2,7 @@
 
 ## ADDED Requirements
 
-### Requirement: API host project folder layout
+### Requirement: API host project layout
 
 The `TextChunker.Api` project SHALL keep four dedicated source folders, each
 owning one concern: `Contracts/` — HTTP wire types (request/response and

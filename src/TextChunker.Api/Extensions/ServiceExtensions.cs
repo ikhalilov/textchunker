@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
+using TextChunker.Api.Options;
 using TextChunker.Api.Services;
 
 namespace TextChunker.Api.Extensions;

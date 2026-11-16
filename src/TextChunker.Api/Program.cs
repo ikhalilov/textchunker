@@ -8,6 +8,7 @@ using TextChunker;
 using TextChunker.Api.Extensions;
 using TextChunker.Abstractions;
 using TextChunker.Api.Contracts;
+using TextChunker.Api.Options;
 using TextChunker.Api.Services;
 using TextChunker.Chunking;
 using TextChunker.Tokenizers;

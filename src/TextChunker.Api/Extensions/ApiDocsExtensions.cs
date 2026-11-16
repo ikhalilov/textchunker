@@ -4,7 +4,7 @@ using Microsoft.OpenApi;
 
 using Scalar.AspNetCore;
 
-using TextChunker.Api.Services;
+using TextChunker.Api.Options;
 
 namespace TextChunker.Api.Extensions;
 

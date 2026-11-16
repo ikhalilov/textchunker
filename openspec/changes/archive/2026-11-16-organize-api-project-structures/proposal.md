@@ -14,7 +14,8 @@ designated home.
 - New folder `src/TextChunker.Api/Options/` holding `ApiOptions` and
   `ApiDocsOptions`; both namespaces become `TextChunker.Api.Options`; the two
   extension helpers (`ServiceExtensions.cs`, `ApiDocsExtensions.cs`) gain or
-  adjust `using TextChunker.Api.Options`.
+  adjust `using TextChunker.Api.Options`; `Program.cs` and `ChunkingEngine.cs`
+  (consumers of `ApiOptions`) gain the same `using`.
 - No new `Models/` or `Entities/` folder: HTTP wire contracts stay in the
   existing `Contracts/` (the wire is the only "model" of the API); internal
   per-request records (`ChunkSession`, `ChunkResult`) and API-specific
@@ -42,8 +43,9 @@ None.
 
 ## Impact
 
-- **Code**: 2 files moved, 2 namespace changes, 2 `using` edits
-  (`ServiceExtensions.cs`, `ApiDocsExtensions.cs`), one documentation update.
+- **Code**: 2 files moved, 2 namespace changes, 4 `using` edits
+  (`ServiceExtensions.cs`, `ApiDocsExtensions.cs`, `Program.cs`,
+  `ChunkingEngine.cs`), one documentation update.
 - **Dependency graph**: unchanged; no project references change.
 - **Build**: `dotnet build TextChunker.slnx` expected clean.
 - **Tests**: full suite expected green (361 tests before the change); the 63
